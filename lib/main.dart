@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:expense_tracker/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dbcrypt/dbcrypt.dart';
+import 'package:flutter/services.dart';
 
 
 Future<void> main() async {
@@ -30,7 +31,7 @@ class ExpenseTracker extends StatelessWidget {
 
       home: Scaffold(
 
-
+        resizeToAvoidBottomInset: false,
         body: LoginPage()
       )
 
@@ -51,11 +52,14 @@ class _LoginPageState extends State<LoginPage> {
 
   final _key = GlobalKey<FormState>();
 
+  final phoneNumberRegex = RegExp(r'^[0-9]*$');
+  final phoneNumberLength = 10;
+
   late String _phoneNumber;
 
   late String _password;
 
-  late bool _visPass;
+  late bool _visPass = false;
 
 
 
@@ -67,13 +71,9 @@ class _LoginPageState extends State<LoginPage> {
 
     if(formState!.validate()) {
 
-      await FirebaseAuth.instance.signInWithPhoneNumber(_phoneNumber);
 
 
-
-      print("Valid form!");
-      //await mAuth.signInWithPhoneNumber(_phoneNumber, RecaptchaVerifier(size: RecaptchaVerifierSize.compact));
-
+      print("Valid form! $_phoneNumber $_password");
 
 
     }
@@ -84,7 +84,8 @@ class _LoginPageState extends State<LoginPage> {
 
     return Center(
 
-
+      widthFactor: double.infinity,
+      heightFactor: 3.25,
       child: Form(
 
           key: _key,
@@ -110,16 +111,15 @@ class _LoginPageState extends State<LoginPage> {
 
                   hintText: "Phone number",
 
-
+                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
 
                 ),
 
                 validator: (value) {
 
-                  if (value!.isEmpty) {
+                  if(!phoneNumberRegex.hasMatch(value!) || value.isEmpty || value.length < phoneNumberLength) {
 
-                    return 'Please enter your phone number';
-
+                    return 'Please enter a valid phone number';
                   }
 
                   //return null if text is valid
@@ -132,6 +132,12 @@ class _LoginPageState extends State<LoginPage> {
 
 
                 keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter(
+                      phoneNumberRegex,
+                      allow: true),
+                  LengthLimitingTextInputFormatter(phoneNumberLength)
+                ],
 
               ),
 
@@ -140,9 +146,9 @@ class _LoginPageState extends State<LoginPage> {
               //Password Field
               TextFormField(
 
-                decoration:  InputDecoration(
+                decoration: InputDecoration(
 
-                    prefixIcon: Icon(Icons.password),
+                    prefixIcon: Icon(Icons.lock),
                     hintText: "Password",
                     suffixIcon: GestureDetector(
 
@@ -151,10 +157,12 @@ class _LoginPageState extends State<LoginPage> {
                       onTap: () => setState(() {
                         _visPass = !_visPass;
                       })
+                    ),
 
-                    )
+                    contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
 
-                ),
+
+              ),
 
                 validator: (value) {
 
@@ -170,6 +178,8 @@ class _LoginPageState extends State<LoginPage> {
                 },
 
                 obscureText: !_visPass,
+
+                onChanged: (value) => _password = value,
 
 
               ),

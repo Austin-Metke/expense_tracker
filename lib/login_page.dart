@@ -1,7 +1,11 @@
+import 'package:expense_tracker/ManagerPage.dart';
+import 'package:expense_tracker/ReceiptPage.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_database/firebase_database.dart';
+
+import 'Global.dart';
 
 class ExpenseTracker extends StatelessWidget {
   const ExpenseTracker({Key? key}) : super(key: key);
@@ -9,6 +13,7 @@ class ExpenseTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
+
         home: Scaffold(resizeToAvoidBottomInset: false, body: LoginPage()));
   }
 }
@@ -25,28 +30,76 @@ class _LoginPageState extends State<LoginPage> {
 
   final phoneNumberRegex = RegExp(r'^[0-9]*$');
   final phoneNumberLength = 10;
-  Color colorBlue = const Color(0xff5d5fef);
   late String _phoneNumber;
   late String _password;
   late bool _visPass = false;
+  late bool? _userNotFound = false;
+  late bool? _wrongPassword = false;
+  late bool? _tooManyRequests = false;
   var auth = FirebaseAuth.instance;
+  var dbRef = FirebaseDatabase.instance.ref("users");
 
   _submitForm() async {
     final formState = _key.currentState;
 
-    
     if (formState!.validate()) {
-      print("Valid form! $_phoneNumber $_password");
-      var credential = EmailAuthProvider.credential(email: _phoneNumber + "@fakeemail.com", password: _password);
+      var credential = EmailAuthProvider.credential(
+          email: _phoneNumber + "@fakeemail.com", password: _password);
+      //print("Valid form! $_phoneNumber $_password");
+
       try {
-        auth.signInWithCredential(credential);
+        await auth.signInWithCredential(credential);
+
+        //TODO: REMOVE FROM PRODUCTION
+        //dbRef.set(auth.currentUser?.uid);
+        //dbRef.child(auth.currentUser!.uid).child('manager').set(true);
+
+        var event = await dbRef.child(auth.currentUser!.uid).child('manager').once();
+
+        var isManager = event.snapshot.value.toString();
+
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+          switch (isManager) {
+            case 'true':
+              print("Manager login");
+
+              //TODO fix uncomment before production release
+         //return const ManagerRoute();
+          return const ReceiptRoute();
+
+            case 'false':
+              print("Employee login");
+              return const ReceiptRoute();
+
+            default:
+              //Should do a better case when isManager is null
+            print("Some ting wong");
+              return Container();
+          }
+        }
+
+
+        ));
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
           case 'user-not-found':
-            print("User does not exist");
+            setState(() => _userNotFound = true);
+            formState.validate();
+            print("User not found");
             break;
           case 'wrong-password':
+            setState(() => _wrongPassword = true);
+            formState.validate();
             print("Wrong password");
+            break;
+          case 'too-many-requests':
+            setState(() => _tooManyRequests = true);
+            formState.validate();
+            print("Too many requests");
+            break;
+
+          default:
+            print("Unknown error " + e.code);
         }
       }
     }
@@ -62,7 +115,10 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             //Temporary Logo
 
-            const Image(image: AssetImage("assets/cvcenterprise.png"), height: 188, width: 400),
+            const Image(
+                image: AssetImage("assets/cvcenterprise.png"),
+                height: 188,
+                width: 400),
 
             //Phone number field
             Padding(
@@ -80,7 +136,6 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(
                 height: 40,
                 width: 375,
-                //padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
                 child: loginButton()),
 
             Padding(
@@ -89,18 +144,18 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text("Forgot password?",
                       style: TextStyle(
                         fontSize: 18,
-                        color: colorBlue,
+                        color: Global.colorBlue,
                       )),
                   onTap: () => _forgotPassword(),
                 )),
 
             Padding(
-                padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
+                padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
                 child: GestureDetector(
                   child: Text("¿Hablas Español?",
                       style: TextStyle(
                         fontSize: 18,
-                        color: colorBlue,
+                        color: Global.colorBlue,
                       )),
                   onTap: () => changeLang(),
                 )),
@@ -120,21 +175,9 @@ class _LoginPageState extends State<LoginPage> {
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
         ),
-        validator: (value) {
-          if (!phoneNumberRegex.hasMatch(value!) ||
-              value.isEmpty ||
-              value.length < phoneNumberLength) {
-            return 'Please enter a valid phone number';
-          }
-          //return null if text is valid
-          return null;
-        },
+        validator: (value) => _phoneNumberValidator(value),
         onChanged: (value) => _phoneNumber = value,
-        onFieldSubmitted: (value) {
-          if (!_key.currentState!.validate()) {
-            print("Invalid phone number");
-          }
-        },
+        onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
         inputFormatters: [
           FilteringTextInputFormatter(phoneNumberRegex, allow: true),
@@ -159,56 +202,64 @@ class _LoginPageState extends State<LoginPage> {
                   _visPass = !_visPass;
                 })),
       ),
-      validator: (value) {
-        if (value!.isEmpty) {
-          return 'Please enter your password';
-        }
-
-        //return null if text is valid
-        return null;
-      },
+      validator: (value) => _passwordValidator(value),
       obscureText: !_visPass,
       onChanged: (value) => _password = value,
-      onFieldSubmitted: (value) {
-        if (!_key.currentState!.validate()) {
-          print("Invalid password");
-        }
-      });
+      onFieldSubmitted: (value) => _key.currentState?.validate());
 
 //**********************Login Button**************************
   Widget loginButton() => TextButton(
         style: TextButton.styleFrom(
           shape: const StadiumBorder(),
           maximumSize: Size.infinite,
-          backgroundColor: colorBlue,
+          backgroundColor: Global.colorBlue,
           primary: Colors.white,
         ),
         onPressed: () => _submitForm(),
         child: const Text("Login"),
       );
 
-/*  Future<bool> _loginUser(String phoneNumber, BuildContext context) async{
-
-    var _auth = FirebaseAuth.instance;
-
-    _auth.verifyPhoneNumber(phoneNumber: phoneNumber,
-        verificationCompleted: (AuthCredential credential) async {
-
-      var result = await _auth.signInWithCredential(credential);
-
-        var user = result.user;
-
-
-        }, codeAutoRetrievalTimeout: (String verificationId) {  }, verificationFailed: (FirebaseAuthException error) {  }, codeSent: (String verificationId, int? forceResendingToken) {  })
-
-
-  }*/
-
   _forgotPassword() {
+
     print("Forgot password");
+
   }
 
   changeLang() {
     print("Change language");
+  }
+
+  _passwordValidator(String? value) {
+    if (value!.isEmpty) {
+      return 'Please enter a password';
+    }
+    if (_wrongPassword!) {
+      _wrongPassword = false;
+      return 'Password is wrong, please try again';
+    }
+
+    if(_tooManyRequests!) {
+
+      _tooManyRequests = false;
+      return 'Too many requests to login, please wait between requests';
+
+    }
+
+    //return null if text is valid
+    return null;
+  }
+
+  _phoneNumberValidator(String? value) {
+    if (!phoneNumberRegex.hasMatch(value!) || value.isEmpty || value.length < phoneNumberLength) {
+      return 'Please enter a valid phone number';
+    }
+
+    if (_userNotFound!) {
+      _userNotFound = false;
+      return "User with phone number not exist";
+    }
+
+    //return null if text is valid
+    return null;
   }
 }

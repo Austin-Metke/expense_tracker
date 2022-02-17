@@ -9,14 +9,12 @@ class Receipt {
   toJson() => _serializeToJson(this);
 
 
-
   Receipt({required double? total, required File? image }) {
 
     _receiptTotal = total;
     _receiptImage = image;
 
   }
-
 
    Map<String, dynamic> _serializeToJson(Receipt receipt)  {
 

@@ -1,3 +1,4 @@
+import 'package:expense_tracker/ManagerFunctions.dart';
 import 'package:expense_tracker/ManagerPage.dart';
 import 'package:expense_tracker/ReceiptPage.dart';
 import 'package:flutter/material.dart';
@@ -64,8 +65,8 @@ class _LoginPageState extends State<LoginPage> {
               print("Manager login");
 
               //TODO fix uncomment before production release
-         //return const ManagerRoute();
-          return const ReceiptRoute();
+         return const ManagerFunctionsPage();
+          //return const ReceiptRoute();
 
             case 'false':
               print("Employee login");
@@ -209,12 +210,7 @@ class _LoginPageState extends State<LoginPage> {
 
 //**********************Login Button**************************
   Widget loginButton() => TextButton(
-        style: TextButton.styleFrom(
-          shape: const StadiumBorder(),
-          maximumSize: Size.infinite,
-          backgroundColor: Global.colorBlue,
-          primary: Colors.white,
-        ),
+        style: Global.defaultButtonStyle,
         onPressed: () => _submitForm(),
         child: const Text("Login"),
       );
@@ -241,7 +237,7 @@ class _LoginPageState extends State<LoginPage> {
     if(_tooManyRequests!) {
 
       _tooManyRequests = false;
-      return 'Too many requests to login, please wait between requests';
+      return 'Too many requests to login, try again later';
 
     }
 

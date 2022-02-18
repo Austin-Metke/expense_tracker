@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'package:flutter_native_image/flutter_native_image.dart';
 import 'Global.dart';
 import 'Receipt.dart';
 
@@ -127,6 +128,7 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
                     _receiptTotal = double.parse(value.substring(2)),
                 onFieldSubmitted: (value) => _key.currentState?.validate(),
 
+
                 validator: (value) => _validateTotal(value),
                 inputFormatters: [_format],
               ),
@@ -153,7 +155,8 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
       if (image == null) return;
 
       final imageFile = File(image.path);
-      setState(() => _image = imageFile);
+
+      setState(() => _image = _stripImage(imageFile));
     } on PlatformException catch (e) {
       print("Access to gallery was denied $e");
     }
@@ -166,7 +169,12 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
 
       final imageFile = File(image.path);
 
+
+     // var test = _stripImage(imageFile);
+
+
       setState(() => _image = imageFile);
+
     } on PlatformException catch (e) {
       print("Access to camera was denied $e");
     }
@@ -174,7 +182,6 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
 
   Future<void> _uploadReceipt() async {
     final formState = _key.currentState;
-
 
     setState(() => showLoading = true);
 
@@ -205,6 +212,34 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
     }
     return true;
   }
+}
+
+  Future<File?> _compressImage(File? image) async {
+  final filepath = image?.absolute.path;
+
+  var compressedImage = await FlutterNativeImage.compressImage(
+
+    filepath!,
+
+    quality: 5,
+
+  );
+
+  return compressedImage;
+
+}
+
+
+
+_stripImage(File? image) {
+
+ var compimg = _compressImage(image);
+
+ //TODO Create method to make _image monochrome
+ //var strippedimage = _grayscaleImage(compimg);
+
+  return compimg;
+
 }
 
 _showSuccess() {

@@ -15,7 +15,7 @@ class ExpenseTracker extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
 
-        home: Scaffold(resizeToAvoidBottomInset: false, body: LoginPage()));
+        home: Scaffold(resizeToAvoidBottomInset: true, body: LoginPage()));
   }
 }
 
@@ -42,8 +42,13 @@ class _LoginPageState extends State<LoginPage> {
 
   _submitForm() async {
     final formState = _key.currentState;
+/*
 
-    if (formState!.validate()) {
+    if(auth.currentUser == null) {
+      print("I was correct");
+    }*/
+
+     if (formState!.validate()) {
       var credential = EmailAuthProvider.credential(
           email: _phoneNumber + "@fakeemail.com", password: _password);
       //print("Valid form! $_phoneNumber $_password");
@@ -65,8 +70,8 @@ class _LoginPageState extends State<LoginPage> {
               print("Manager login");
 
               //TODO fix uncomment before production release
-         return const ManagerFunctionsPage();
-          //return const ReceiptRoute();
+        // return const ManagerFunctionsPage();
+          return const ReceiptRoute();
 
             case 'false':
               print("Employee login");

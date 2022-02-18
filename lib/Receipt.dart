@@ -5,7 +5,7 @@ class Receipt {
 
 
   var _receiptTotal;
-  var _receiptImage;
+  File?_receiptImage;
   toJson() => _serializeToJson(this);
 
 
@@ -19,7 +19,7 @@ class Receipt {
    Map<String, dynamic> _serializeToJson(Receipt receipt)  {
 
     
-   var imageAsBytes = File(receipt._receiptImage.toString().substring(0, receipt._receiptImage.toString().length - 1).substring(7)).readAsBytesSync();
+   var imageAsBytes = File(receipt._receiptImage!.path).readAsBytesSync();
 
    var b64Enc = base64Encode(imageAsBytes);
 

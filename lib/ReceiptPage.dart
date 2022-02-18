@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
+import 'package:oktoast/oktoast.dart';
 import 'Global.dart';
 import 'Receipt.dart';
 
@@ -29,7 +30,11 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return OKToast(
+
+      radius: 10,
+
+        child: Scaffold(
       resizeToAvoidBottomInset: false,
       body: SingleChildScrollView(
         child: Form(
@@ -128,7 +133,6 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
                     _receiptTotal = double.parse(value.substring(2)),
                 onFieldSubmitted: (value) => _key.currentState?.validate(),
 
-
                 validator: (value) => _validateTotal(value),
                 inputFormatters: [_format],
               ),
@@ -138,14 +142,15 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
                     style: Global.defaultButtonStyle,
                     child: Text("Upload"),
                     onPressed: () => _uploadReceipt(),
-                  )),
-
+                  )
+              ),
 
 
             ],
           ),
         ),
       ),
+    )
     );
   }
 
@@ -167,14 +172,11 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
       final image = await ImagePicker().pickImage(source: ImageSource.camera);
       if (image == null) return;
 
-      final imageFile = File(image.path);
+      final imageAsFile = File(image.path);
 
+      var strippedImage = await _stripImage(imageAsFile);
 
-     // var test = _stripImage(imageFile);
-
-
-      setState(() => _image = imageFile);
-
+      setState(() => _image = strippedImage);
     } on PlatformException catch (e) {
       print("Access to camera was denied $e");
     }
@@ -186,15 +188,19 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
     setState(() => showLoading = true);
 
     if (formState!.validate() && _validateImage(_image)) {
+
+      _showLoadingToast();
+
       final Receipt receipt = Receipt(image: _image, total: _receiptTotal);
+
 
       await dbRef
           .child(auth.currentUser!.uid)
-          .child('receipts1')
+          .child('receipts')
           .push()
           .set(receipt.toJson())
           .then((value) => _showSuccess())
-          .onError((error, stackTrace) => _showError());
+          .onError((error, stackTrace) => _showErrorToast());
     }
   }
 
@@ -212,40 +218,76 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
     }
     return true;
   }
+
+
+
+
+
+
+
+
+
+
 }
 
-  Future<File?> _compressImage(File? image) async {
+Future<File?> _compressImage(File? image) async {
   final filepath = image?.absolute.path;
 
   var compressedImage = await FlutterNativeImage.compressImage(
-
     filepath!,
-
-    quality: 5,
-
+    percentage: 50,
+    quality: 20,
   );
 
   return compressedImage;
-
 }
 
-
-
 _stripImage(File? image) {
+  var compimg = _compressImage(image);
 
- var compimg = _compressImage(image);
-
- //TODO Create method to make _image monochrome
- //var strippedimage = _grayscaleImage(compimg);
+  //TODO Create method to make _image monochrome
+  //var strippedimage = _grayscaleImage(compimg);
 
   return compimg;
-
 }
 
 _showSuccess() {
+  showToast(
+    'Upload complete!',
+    position: ToastPosition.bottom,
+    backgroundColor: Colors.green.withOpacity(0.3),
+    radius: 10.0,
+    textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+    dismissOtherToast: true,
+    textAlign: TextAlign.center,
+
+  );
+}
 
 
+_showErrorToast() {
+
+  showToast(
+    'Upload failed!',
+    position: ToastPosition.bottom,
+    backgroundColor: Colors.red.withOpacity(0.3),
+    radius: 10.0,
+    textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+    dismissOtherToast: true,
+    textAlign: TextAlign.center,
+  );
 
 }
 
-_showError() {}
+
+_showLoadingToast() {
+  showToast(
+    'Uploading...',
+    position: ToastPosition.bottom,
+    backgroundColor: Colors.grey.withOpacity(0.3),
+    radius: 10.0,
+    textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+    dismissOtherToast: true,
+    textAlign: TextAlign.center,
+  );
+}

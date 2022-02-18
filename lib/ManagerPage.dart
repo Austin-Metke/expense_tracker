@@ -1,6 +1,3 @@
-
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ManagerRoute extends StatefulWidget {
@@ -21,7 +18,7 @@ class _ManagerRouteState extends State<ManagerRoute> {
         child: Column(
 
 
-          children: <Widget>[
+          children: const <Widget>[
 
             Text("Manager page"),
 

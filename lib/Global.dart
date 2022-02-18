@@ -1,8 +1,4 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
-
 class Global {
 
   static Color colorBlue = const Color(0xff5d5fef);

@@ -14,7 +14,6 @@ class ExpenseTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-
         home: Scaffold(resizeToAvoidBottomInset: true, body: LoginPage()));
   }
 }
@@ -42,13 +41,8 @@ class _LoginPageState extends State<LoginPage> {
 
   _submitForm() async {
     final formState = _key.currentState;
-/*
 
-    if(auth.currentUser == null) {
-      print("I was correct");
-    }*/
-
-     if (formState!.validate()) {
+    if (formState!.validate()) {
       var credential = EmailAuthProvider.credential(
           email: _phoneNumber + "@fakeemail.com", password: _password);
       //print("Valid form! $_phoneNumber $_password");
@@ -56,11 +50,8 @@ class _LoginPageState extends State<LoginPage> {
       try {
         await auth.signInWithCredential(credential);
 
-        //TODO: REMOVE FROM PRODUCTION
-        //dbRef.set(auth.currentUser?.uid);
-        //dbRef.child(auth.currentUser!.uid).child('manager').set(true);
-
-        var event = await dbRef.child(auth.currentUser!.uid).child('manager').once();
+        final event =
+            await dbRef.child(auth.currentUser!.uid).child('manager').once();
 
         var isManager = event.snapshot.value.toString();
 
@@ -70,8 +61,8 @@ class _LoginPageState extends State<LoginPage> {
               print("Manager login");
 
               //TODO fix uncomment before production release
-        // return const ManagerFunctionsPage();
-          return const ReceiptRoute();
+              // return const ManagerFunctionsPage();
+              return const ReceiptRoute();
 
             case 'false':
               print("Employee login");
@@ -79,13 +70,10 @@ class _LoginPageState extends State<LoginPage> {
 
             default:
               //Should do a better case when isManager is null
-            print("Some ting wong");
+              print("Some ting wong");
               return Container();
           }
-        }
-
-
-        ));
+        }));
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
           case 'user-not-found':
@@ -139,10 +127,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
 
             //Login Button
-            SizedBox(
-                height: 40,
-                width: 375,
-                child: loginButton()),
+            SizedBox(height: 40, width: 375, child: loginButton()),
 
             Padding(
                 padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
@@ -221,9 +206,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
   _forgotPassword() {
-
     print("Forgot password");
-
   }
 
   changeLang() {
@@ -239,11 +222,9 @@ class _LoginPageState extends State<LoginPage> {
       return 'Password is wrong, please try again';
     }
 
-    if(_tooManyRequests!) {
-
+    if (_tooManyRequests!) {
       _tooManyRequests = false;
       return 'Too many requests to login, try again later';
-
     }
 
     //return null if text is valid
@@ -251,7 +232,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _phoneNumberValidator(String? value) {
-    if (!phoneNumberRegex.hasMatch(value!) || value.isEmpty || value.length < phoneNumberLength) {
+    if (!phoneNumberRegex.hasMatch(value!) ||
+        value.isEmpty ||
+        value.length < phoneNumberLength) {
       return 'Please enter a valid phone number';
     }
 

@@ -1,4 +1,3 @@
-
 import 'package:expense_tracker/login_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
@@ -13,6 +12,3 @@ Future<void> main() async {
 
   runApp(const ExpenseTracker());
 }
-
-
-

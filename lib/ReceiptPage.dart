@@ -1,6 +1,7 @@
+import 'dart:ffi';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,139 +20,179 @@ class ReceiptRoute extends StatefulWidget {
 
 class _ReceiptRouteState extends State<ReceiptRoute> {
   final _key = GlobalKey<FormState>();
+  final _commentLength = 140;
   File? _image;
   double? _receiptTotal;
+  String? _comment;
   final _format = CurrencyTextInputFormatter(
       symbol: "\$ ", decimalDigits: 2, turnOffGrouping: true);
   var auth = FirebaseAuth.instance;
-  var dbRef = FirebaseDatabase.instance.ref("users");
-
-  late bool showLoading = false;
+  var dbRef = FirebaseFirestore.instance.collection('users');
+  var _enableButton = true;
+  final characterLimit = 300;
 
   @override
   Widget build(BuildContext context) {
     return OKToast(
-
-      radius: 10,
-
+        radius: 10,
         child: Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: SingleChildScrollView(
-        child: Form(
-          key: _key,
-          child: Column(
-            children: <Widget>[
-              const Align(
-                alignment: Alignment.topCenter,
-                child: Text(
-                  "Upload Receipt",
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w600,
+          resizeToAvoidBottomInset: true,
+          body: SingleChildScrollView(
+            child: Form(
+              key: _key,
+              child: Column(
+                children: <Widget>[
+                  const Align(
+                    alignment: Alignment.topCenter,
+                    child: Text(
+                      "Upload Receipt",
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              _image != null
-                  ? Image.file(
-                      _image!,
-                      filterQuality: FilterQuality.medium,
-                      width: 150,
-                      height: 200,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: 150,
-                      height: 150,
-                      color: Colors.black12,
-                      child: Center(
-                          child: Text(
-                        "Please Select image",
-                        style: TextStyle(
-                          color: _validateImage(_image)
-                              ? Colors.black
-                              : Colors.red,
-                        ),
-                      ))),
-              const SizedBox(
-                height: 50,
-              ),
-              Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    SizedBox(
-                      height: 40,
-                      width: 200,
-                      child: TextButton(
-                        style: Global.defaultButtonStyle,
-                        child: Row(
-                          children: const <Widget>[
-                            Icon(
-                              Icons.photo_library_outlined,
+
+                  //*************Image*************
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Container(
+                      child: _image != null
+                          ? Image.file(
+                              _image!,
+                              filterQuality: FilterQuality.medium,
+                              width: 150,
+                              height: 150,
+                              fit: BoxFit.cover,
+                            )
+                          : Container(
+                              width: 150,
+                              height: 150,
+                              color: Colors.black12,
+                              child: Center(
+                                child: Text(
+                                  "Please Select image",
+                                  style: TextStyle(
+                                    color: _validateImage(_image)
+                                        ? Colors.black
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ),
                             ),
-                            SizedBox(width: 5),
-                            Text("Pick image from gallery"),
-                          ],
+                    ),
+                  ),
+                  //***********************
+
+                  //*************ImageButtons*************
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.all(2.5),
+                            child: TextButton(
+                              style: Global.defaultButtonStyle,
+                              child: Row(
+                                children: const <Widget>[
+                                  Padding(
+                                    padding: EdgeInsets.fromLTRB(0, 0, 2, 0),
+                                    child: Icon(
+                                      Icons.photo_library_outlined,
+                                    ),
+                                  ),
+                                  Text("Pick image from gallery"),
+                                ],
+                              ),
+                              onPressed: () => getImage(),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(5),
+                            child: TextButton(
+                              style: Global.defaultButtonStyle,
+                              onPressed: () => getCamera(),
+                              child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const <Widget>[
+                                    Padding(
+                                      padding: EdgeInsets.fromLTRB(0, 0, 2, 0),
+                                      child: Icon(Icons.camera_alt),
+                                    ),
+                                    Text("Take picture of receipt"),
+                                  ]),
+                            ),
+                          ),
+                        ]),
+                  ),
+                  //**************************
+
+                  //************TotalFormField***********
+                  Padding(
+                    padding: EdgeInsets.all(10),
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                        labelText: "Receipt Total",
+                        hintText: _format.format('000'),
+                        border: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
-                        onPressed: () => getImage(),
                       ),
+                      showCursor: true,
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) =>
+                          _receiptTotal = double.parse(value.substring(2)),
+                      onFieldSubmitted: (value) =>
+                          _key.currentState?.validate(),
+                      validator: (value) => _validateTotal(value),
+                      inputFormatters: [_format],
                     ),
-                    const SizedBox(
-                      width: 10,
+                  ),
+                  //**********************************
+
+                  //***********CommentFormField*********
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: "Comment",
+                        hintText: "Add a comment (optional)",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                      ),
+                      onChanged: (value) => _comment = value,
+                      validator: (value) => _validateComment(value),
+                      onFieldSubmitted: (value) =>
+                          _key.currentState?.validate(),
+                      maxLength: characterLimit,
                     ),
-                    SizedBox(
-                      height: 40,
-                      width: 200,
+                  ),
+                  //**********************************
+
+                  //************UploadButton**********
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: SizedBox(
+                      width: 150,
                       child: TextButton(
                         style: Global.defaultButtonStyle,
-                        onPressed: () => getCamera(),
-                        child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const <Widget>[
-                              Icon(Icons.camera_alt),
-                              SizedBox(width: 5),
-                              Text("Take picture of receipt"),
-                            ]),
+                        child: const Text("Upload"),
+                        //Ternary operation to ensure _uploadReceipt() isn't called during an upload
+                        onPressed: () =>
+                            _enableButton ? _uploadReceipt() : null,
                       ),
                     ),
-                  ]),
-              const SizedBox(height: 20),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Receipt Total",
-                  hintText: _format.format('000'),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
-                ),
-                showCursor: true,
-                keyboardType: TextInputType.number,
-
-                //Ternary operation prevents substring() error from parsing a null value
-                onChanged: (value) =>
-                    _receiptTotal = double.parse(value.substring(2)),
-                onFieldSubmitted: (value) => _key.currentState?.validate(),
-
-                validator: (value) => _validateTotal(value),
-                inputFormatters: [_format],
+                  //*********************************
+                ],
               ),
-              SizedBox(
-                  width: 150,
-                  child: TextButton(
-                    style: Global.defaultButtonStyle,
-                    child: Text("Upload"),
-                    onPressed: () => _uploadReceipt(),
-                  )
-              ),
-
-
-            ],
+            ),
           ),
-        ),
-      ),
-    )
-    );
+        ));
   }
 
   Future getImage() async {
@@ -182,30 +223,24 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
     }
   }
 
+
+
   Future<void> _uploadReceipt() async {
     final formState = _key.currentState;
 
-    setState(() => showLoading = true);
-
     if (formState!.validate() && _validateImage(_image)) {
+      _uploadWait();
 
-      _showLoadingToast();
-
-      final Receipt receipt = Receipt(image: _image, total: _receiptTotal);
-
-
-      await dbRef
-          .child(auth.currentUser!.uid)
-          .child('receipts')
-          .push()
-          .set(receipt.toJson())
-          .then((value) => _showSuccess())
-          .onError((error, stackTrace) => _showErrorToast());
+      final Receipt receipt =
+          Receipt(image: _image, total: _receiptTotal, comment: _comment);
+      await dbRef.doc(Global.auth.currentUser?.uid).collection("receipts").add(receipt.toJson()).then((value) => _uploadSuccess()).onError((error, stackTrace) => _uploadFail());
     }
   }
 
   _validateTotal(String? value) {
-    if (value!.isEmpty || _receiptTotal!.isNaN) {
+    if (value!.isEmpty ||
+        _receiptTotal!.isNaN ||
+        double.parse(value.substring(2)) == 0) {
       return 'Please enter a total for your receipt';
     }
 
@@ -219,75 +254,83 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
     return true;
   }
 
+  _validateComment(String? value) {
+    if (value!.length > _commentLength) {
+      return 'Comment is too long';
+    }
+
+    return null;
+  }
+
+  Future<File?> _compressImage(File? image) async {
+    final filepath = image?.absolute.path;
+
+    var compressedImage = await FlutterNativeImage.compressImage(
+      filepath!,
+      percentage: 50,
+      quality: 20,
+    );
+
+    return compressedImage;
+  }
+
+  _stripImage(File? image) {
+    var compimg = _compressImage(image);
+
+    //TODO Create method to make _image monochrome
+
+    return compimg;
+  }
 
 
+  _uploadFail() {
+    _errorToast();
+    _enableButton = true;
+  }
 
+  _uploadSuccess() {
+    _successToast();
+    _enableButton = true;
+  }
 
+  _uploadWait() {
+    _loadingToast();
+    _enableButton = false;
+  }
 
+  _successToast() {
+    showToast(
+      'Upload complete!',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.greenAccent.shade400,
+      radius: 10.0,
+      textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+  }
 
+  _errorToast() {
+    showToast(
+      'Upload failed!',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.red,
+      radius: 10.0,
+      textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+  }
 
-
-
-}
-
-Future<File?> _compressImage(File? image) async {
-  final filepath = image?.absolute.path;
-
-  var compressedImage = await FlutterNativeImage.compressImage(
-    filepath!,
-    percentage: 50,
-    quality: 20,
-  );
-
-  return compressedImage;
-}
-
-_stripImage(File? image) {
-  var compimg = _compressImage(image);
-
-  //TODO Create method to make _image monochrome
-  //var strippedimage = _grayscaleImage(compimg);
-
-  return compimg;
-}
-
-_showSuccess() {
-  showToast(
-    'Upload complete!',
-    position: ToastPosition.bottom,
-    backgroundColor: Colors.green.withOpacity(0.3),
-    radius: 10.0,
-    textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
-    dismissOtherToast: true,
-    textAlign: TextAlign.center,
-
-  );
-}
-
-
-_showErrorToast() {
-
-  showToast(
-    'Upload failed!',
-    position: ToastPosition.bottom,
-    backgroundColor: Colors.red.withOpacity(0.3),
-    radius: 10.0,
-    textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
-    dismissOtherToast: true,
-    textAlign: TextAlign.center,
-  );
-
-}
-
-
-_showLoadingToast() {
-  showToast(
-    'Uploading...',
-    position: ToastPosition.bottom,
-    backgroundColor: Colors.grey.withOpacity(0.3),
-    radius: 10.0,
-    textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
-    dismissOtherToast: true,
-    textAlign: TextAlign.center,
-  );
+  _loadingToast() {
+    showToast(
+      'Uploading...',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.grey,
+      radius: 10.0,
+      textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+  }
 }

@@ -1,10 +1,8 @@
-import 'package:expense_tracker/ManagerFunctions.dart';
-import 'package:expense_tracker/ManagerPage.dart';
-import 'package:expense_tracker/ReceiptPage.dart';
+import 'package:expense_tracker/UserFunctions.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_database/firebase_database.dart';
+
 
 import 'Global.dart';
 
@@ -36,8 +34,6 @@ class _LoginPageState extends State<LoginPage> {
   late bool? _userNotFound = false;
   late bool? _wrongPassword = false;
   late bool? _tooManyRequests = false;
-  var auth = FirebaseAuth.instance;
-  var dbRef = FirebaseDatabase.instance.ref("users");
 
   _submitForm() async {
     final formState = _key.currentState;
@@ -45,35 +41,11 @@ class _LoginPageState extends State<LoginPage> {
     if (formState!.validate()) {
       var credential = EmailAuthProvider.credential(
           email: _phoneNumber + "@fakeemail.com", password: _password);
-      //print("Valid form! $_phoneNumber $_password");
+      print("Valid form! $_phoneNumber $_password");
 
       try {
-        await auth.signInWithCredential(credential);
-
-        final event =
-            await dbRef.child(auth.currentUser!.uid).child('manager').once();
-
-        var isManager = event.snapshot.value.toString();
-
-        Navigator.push(context, MaterialPageRoute(builder: (context) {
-          switch (isManager) {
-            case 'true':
-              print("Manager login");
-
-              //TODO fix uncomment before production release
-              // return const ManagerFunctionsPage();
-              return const ReceiptRoute();
-
-            case 'false':
-              print("Employee login");
-              return const ReceiptRoute();
-
-            default:
-              //Should do a better case when isManager is null
-              print("Some ting wong");
-              return Container();
-          }
-        }));
+        print("TEST");
+        await Global.auth.signInWithCredential(credential).then((value) => _showUserFunctionPage()).onError((error, stackTrace) => print("ERROR: $error, STACKTRACE: $stackTrace"));
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
           case 'user-not-found':
@@ -201,7 +173,7 @@ class _LoginPageState extends State<LoginPage> {
 //**********************Login Button**************************
   Widget loginButton() => TextButton(
         style: Global.defaultButtonStyle,
-        onPressed: () => _submitForm(),
+        onPressed: ()  => _submitForm(),
         child: const Text("Login"),
       );
 
@@ -245,5 +217,10 @@ class _LoginPageState extends State<LoginPage> {
 
     //return null if text is valid
     return null;
+  }
+
+  _showUserFunctionPage() {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const UserFunctionsPage()));
   }
 }

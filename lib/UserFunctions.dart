@@ -9,6 +9,8 @@ import 'Global.dart';
 import 'User.dart';
 import "dart:convert";
 
+import 'ViewUploadedReceiptsPage.dart';
+
 class UserFunctionsPage extends StatefulWidget {
   const UserFunctionsPage({Key? key}) : super(key: key);
 
@@ -35,7 +37,7 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
             TextButton(
               style: Global.defaultButtonStyle,
               child: const Text("View and edit uploaded receipts"),
-              onPressed: () => null,
+              onPressed: () => _viewUploadedReceiptsPage(),
             ),
 
             FutureBuilder(
@@ -94,12 +96,17 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
 
   _viewReceiptPage() {
     Navigator.push(
-        context, MaterialPageRoute(builder: (context) => const ReceiptRoute()));
+        context, MaterialPageRoute(builder: (context) => const ReceiptUploadPage()));
   }
 
   _viewUserEditPage() {
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => const EditUserPage()));
+  }
+
+
+  _viewUploadedReceiptsPage() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewUploadedReceiptsPage()));
   }
 
   Future<bool> _isManager() async {
@@ -112,14 +119,7 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
       print(isManager)
     });
 
-
-    if (isManager == true) {
-      return true;
-    } else if (isManager == false) {
-      return false;
-    }
-
-    return false;
+    return isManager;
   }
 
 }

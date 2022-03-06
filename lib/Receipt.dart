@@ -31,7 +31,7 @@ class Receipt {
       'image': _b64Enc,
       'total': receipt._receiptTotal,
       'comment': receipt._receiptComment,
-
+      'date': DateTime.now().microsecondsSinceEpoch,
     };
 
   }

@@ -4,7 +4,6 @@ const admin = require('firebase-admin');
 
 admin.initializeApp();
 
-const db = admin.firestore;
 const auth = admin.auth();
 
 
@@ -46,8 +45,6 @@ exports.updateUser = functions.https.onCall( (data, context) => {
 
 exports.makeUser = functions.https.onCall(async (data, context) => {
 
-
-
     console.log("ID: " + data.jwt);
 
     let idToken = data.jwt;
@@ -63,21 +60,24 @@ exports.makeUser = functions.https.onCall(async (data, context) => {
                 await auth.createUser({
                     displayName: data.name,
                     email: data.email,
+                    phoneNumber: data.phoneNumber,
                     password: data.password,
                 });
 
                 try {
                     functions.auth.user().onCreate(async (user) => {
 
-                        const customClaim = {
+                        var customClaims = {
                             isManager: data.isManager,
                         }
 
-                        await auth.setCustomUserClaims(user.uid, customClaim).then(() => {
+                        await auth.setCustomUserClaims(user.uid, customClaims);
 
-                            console.log('Custom Claims set');
-
-                        });
+                        await admin.firestore().collection('users/' + user.uid).add({
+                            name: user.displayName,
+                            phoneNumber: user.phoneNumber,
+                            isManager: user.customClaims.isManager,
+                        })
 
                     });
                 } catch (e) {
@@ -99,7 +99,7 @@ exports.makeUser = functions.https.onCall(async (data, context) => {
 
 exports.editUser = functions.https.onCall(async (data, context) => {
 
-    if(await auth.getUser(context.auth.uid) !== null) {
+    if (await auth.getUser(context.auth.uid) !== null) {
 
         let user = auth.getUserByEmail(data.email)
 
@@ -111,8 +111,6 @@ exports.editUser = functions.https.onCall(async (data, context) => {
 });
 
 exports.getAllUsers = functions.https.onCall(async (data, context) => {
-
-
 
 
 });

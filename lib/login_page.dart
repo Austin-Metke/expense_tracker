@@ -2,8 +2,6 @@ import 'package:expense_tracker/UserFunctions.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
-
-
 import 'Global.dart';
 
 class ExpenseTracker extends StatelessWidget {
@@ -12,7 +10,9 @@ class ExpenseTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-        home: Scaffold(resizeToAvoidBottomInset: true, body: LoginPage()));
+        home: Scaffold(resizeToAvoidBottomInset: true, body: LoginPage()),
+
+    );
   }
 }
 
@@ -45,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
 
       try {
         print("TEST");
-        await Global.auth.signInWithCredential(credential).then((value) => _showUserFunctionPage()).onError((error, stackTrace) => print("ERROR: $error, STACKTRACE: $stackTrace"));
+        await Global.auth.signInWithCredential(credential).then((value) => _showUserFunctionPage());
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
           case 'user-not-found':
@@ -104,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
             Padding(
                 padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
                 child: GestureDetector(
-                  child: Text("Forgot password?",
+                  child: const Text("Forgot password?",
                       style: TextStyle(
                         fontSize: 18,
                         color: Global.colorBlue,
@@ -115,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
             Padding(
                 padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
                 child: GestureDetector(
-                  child: Text("¿Hablas Español?",
+                  child: const Text("¿Hablas Español?",
                       style: TextStyle(
                         fontSize: 18,
                         color: Global.colorBlue,

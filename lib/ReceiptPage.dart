@@ -11,16 +11,15 @@ import 'package:oktoast/oktoast.dart';
 import 'Global.dart';
 import 'Receipt.dart';
 
-class ReceiptRoute extends StatefulWidget {
-  const ReceiptRoute({Key? key}) : super(key: key);
+class ReceiptUploadPage extends StatefulWidget {
+  const ReceiptUploadPage({Key? key}) : super(key: key);
 
   @override
-  _ReceiptRouteState createState() => _ReceiptRouteState();
+  _ReceiptUploadPageState createState() => _ReceiptUploadPageState();
 }
 
-class _ReceiptRouteState extends State<ReceiptRoute> {
+class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
   final _key = GlobalKey<FormState>();
-  final _commentLength = 140;
   File? _image;
   double? _receiptTotal;
   String? _comment;
@@ -29,7 +28,7 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
   var auth = FirebaseAuth.instance;
   var dbRef = FirebaseFirestore.instance.collection('users');
   var _enableButton = true;
-  final characterLimit = 300;
+  final _characterLimit = 300;
 
   @override
   Widget build(BuildContext context) {
@@ -42,13 +41,17 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
               key: _key,
               child: Column(
                 children: <Widget>[
-                  const Align(
+                   Align(
                     alignment: Alignment.topCenter,
-                    child: Text(
+                    child: SafeArea(
+                      top: true,
+                      child: Text(
                       "Upload Receipt",
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: MediaQuery.of(context).size.width *
+                            0.1,
                         fontWeight: FontWeight.w600,
+                      ),
                       ),
                     ),
                   ),
@@ -96,14 +99,20 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
                             child: TextButton(
                               style: Global.defaultButtonStyle,
                               child: Row(
-                                children: const <Widget>[
-                                  Padding(
-                                    padding: EdgeInsets.fromLTRB(0, 0, 2, 0),
-                                    child: Icon(
-                                      Icons.photo_library_outlined,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.photo_library_outlined,
+                                    size: MediaQuery.of(context).size.width *
+                                        0.050,
+                                  ),
+                                  Text(
+                                    "Pick image from gallery",
+                                    style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.of(context).size.width *
+                                              0.035,
                                     ),
                                   ),
-                                  Text("Pick image from gallery"),
                                 ],
                               ),
                               onPressed: () => getImage(),
@@ -117,12 +126,20 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
                               child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const <Widget>[
-                                    Padding(
-                                      padding: EdgeInsets.fromLTRB(0, 0, 2, 0),
-                                      child: Icon(Icons.camera_alt),
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.camera_alt,
+                                      size: MediaQuery.of(context).size.width *
+                                          0.050,
                                     ),
-                                    Text("Take picture of receipt"),
+                                    Text(
+                                      "Take picture of receipt",
+                                      style: TextStyle(
+                                        fontSize:
+                                            MediaQuery.of(context).size.width *
+                                                0.035,
+                                      ),
+                                    ),
                                   ]),
                             ),
                           ),
@@ -132,7 +149,7 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
 
                   //************TotalFormField***********
                   Padding(
-                    padding: EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
                     child: TextFormField(
                       decoration: InputDecoration(
                         labelText: "Receipt Total",
@@ -168,7 +185,7 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
                       validator: (value) => _validateComment(value),
                       onFieldSubmitted: (value) =>
                           _key.currentState?.validate(),
-                      maxLength: characterLimit,
+                      maxLength: _characterLimit,
                     ),
                   ),
                   //**********************************
@@ -180,7 +197,8 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
                       width: 150,
                       child: TextButton(
                         style: Global.defaultButtonStyle,
-                        child: const Text("Upload"),
+                        child: Text("Upload", style: TextStyle(fontSize: MediaQuery.of(context).size.width *
+                            0.035)),
                         //Ternary operation to ensure _uploadReceipt() isn't called during an upload
                         onPressed: () =>
                             _enableButton ? _uploadReceipt() : null,
@@ -223,8 +241,6 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
     }
   }
 
-
-
   Future<void> _uploadReceipt() async {
     final formState = _key.currentState;
 
@@ -233,7 +249,12 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
 
       final Receipt receipt =
           Receipt(image: _image, total: _receiptTotal, comment: _comment);
-      await dbRef.doc(Global.auth.currentUser?.uid).collection("receipts").add(receipt.toJson()).then((value) => _uploadSuccess()).onError((error, stackTrace) => _uploadFail());
+      await dbRef
+          .doc(Global.auth.currentUser?.uid)
+          .collection("receipts")
+          .add(receipt.toJson())
+          .then((value) => _uploadSuccess())
+          .onError((error, stackTrace) => _uploadFail());
     }
   }
 
@@ -255,7 +276,7 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
   }
 
   _validateComment(String? value) {
-    if (value!.length > _commentLength) {
+    if (value!.length > _characterLimit) {
       return 'Comment is too long';
     }
 
@@ -275,13 +296,12 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
   }
 
   _stripImage(File? image) {
-    var compimg = _compressImage(image);
+    var compressImage = _compressImage(image);
 
-    //TODO Create method to make _image monochrome
+    //TODO Create method to make image monochrome
 
-    return compimg;
+    return compressImage;
   }
-
 
   _uploadFail() {
     _errorToast();
@@ -295,7 +315,7 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
 
   _uploadWait() {
     _loadingToast();
-    _enableButton = false;
+    setState(() => _enableButton = false);
   }
 
   _successToast() {
@@ -304,7 +324,8 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
       radius: 10.0,
-      textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.width *
+          0.035, color: Colors.white),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
     );
@@ -316,7 +337,8 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
       radius: 10.0,
-      textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.width *
+          0.035, color: Colors.white),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
     );
@@ -328,7 +350,8 @@ class _ReceiptRouteState extends State<ReceiptRoute> {
       position: ToastPosition.bottom,
       backgroundColor: Colors.grey,
       radius: 10.0,
-      textStyle: const TextStyle(fontSize: 18.0, color: Colors.white),
+      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.width *
+          0.035, color: Colors.white),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
     );

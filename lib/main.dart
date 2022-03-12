@@ -1,6 +1,6 @@
-import 'package:expense_tracker/login_page.dart';
+import 'package:expense_tracker/LoginPage.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {

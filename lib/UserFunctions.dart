@@ -1,15 +1,15 @@
-import 'package:expense_tracker/ReceiptPage.dart';
+import 'package:expense_tracker/UploadReceiptPage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth_platform_interface/src/id_token_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'EditUserPage.dart';
+import 'ViewUsersPage.dart';
 import 'Global.dart';
 import 'User.dart';
 import "dart:convert";
 
-import 'ViewUploadedReceiptsPage.dart';
+import 'ViewReceiptsPage.dart';
 
 class UserFunctionsPage extends StatefulWidget {
   const UserFunctionsPage({Key? key}) : super(key: key);
@@ -19,7 +19,6 @@ class UserFunctionsPage extends StatefulWidget {
 }
 
 class _UserFunctionsPageState extends State<UserFunctionsPage> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,7 +38,6 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
               child: const Text("View and edit uploaded receipts"),
               onPressed: () => _viewUploadedReceiptsPage(),
             ),
-
             FutureBuilder(
               future: _isManager(),
               builder: ((context, snapshot) {
@@ -55,7 +53,6 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
                 return Container();
               }),
             ),
-
             FutureBuilder(
               future: _isManager(),
               builder: ((context, snapshot) {
@@ -72,54 +69,47 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
                 return Container();
               }),
             ),
-
           ],
         ),
       ),
     );
   }
 
-
-  Widget _crudButton() =>
-      TextButton(
+  Widget _crudButton() => TextButton(
         style: Global.defaultButtonStyle,
-        child: const Text("Create, Edit, & Delete Users"),
+        child: const Text("Manage users"),
         onPressed: () async => _viewUserEditPage(),
       );
 
-  Widget _viewEmployeeReceiptsButton() =>
-      TextButton(
+  Widget _viewEmployeeReceiptsButton() => TextButton(
         style: Global.defaultButtonStyle,
         child: const Text("View all employee receipts"),
         onPressed: () => null,
       );
 
   _viewReceiptPage() {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => const ReceiptUploadPage()));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const ReceiptUploadPage()));
   }
 
   _viewUserEditPage() {
     Navigator.push(
-        context, MaterialPageRoute(builder: (context) => const EditUserPage()));
+        context, MaterialPageRoute(builder: (context) => const ViewUserPage()));
   }
 
-
   _viewUploadedReceiptsPage() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const ViewUploadedReceiptsPage()));
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => const ViewUploadedReceiptsPage()));
   }
 
   Future<bool> _isManager() async {
     var isManager;
 
-    await Global.auth.currentUser?.getIdTokenResult(true).then((value) =>
-    {
-
-      isManager = value.claims!['isManager'],
-      print(isManager)
-    });
+    await Global.auth.currentUser?.getIdTokenResult(true).then(
+        (value) => {isManager = value.claims!['isManager'], print(isManager)});
 
     return isManager;
   }
-
 }

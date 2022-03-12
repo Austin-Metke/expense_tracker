@@ -5,31 +5,22 @@ import 'package:oktoast/oktoast.dart';
 import 'Global.dart';
 import 'User.dart';
 
-class EditUserPage extends StatefulWidget {
-  final userdata;
-
-  const EditUserPage({Key? key, this.userdata}) : super(key: key);
+class AddUserPage extends StatefulWidget {
+  const AddUserPage({Key? key}) : super(key: key);
 
   @override
-  _EditUserPageState createState() => _EditUserPageState();
+  _AddUserPageState createState() => _AddUserPageState();
 }
 
-class _EditUserPageState extends State<EditUserPage> {
+class _AddUserPageState extends State<AddUserPage> {
   final _key = GlobalKey<FormState>();
 
-  late String _password;
-  String? _name;
-  String? _phoneNumber;
-  int? selectedItem;
-  bool? _isManager;
+  late String? _name;
+  late String _phoneNumber;
+  late String? _password;
+  late bool? _isManager = false;
 
-  @override
-  void initState() {
-    selectedItem = (widget.userdata['isManager'] ? 1 : 0);
-    _isManager = widget.userdata['isManager'];
-    _name = widget.userdata['name'];
-    _phoneNumber = widget.userdata['phoneNumber'];
-  }
+  int? selectedItem = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +28,7 @@ class _EditUserPageState extends State<EditUserPage> {
         radius: 10,
         child: Scaffold(
             appBar: AppBar(
-              title: Text("Edit ${_name}"),
+              title: Text("Add a user"),
             ),
             body: Form(
                 key: _key,
@@ -47,7 +38,6 @@ class _EditUserPageState extends State<EditUserPage> {
                     Padding(
                       padding: const EdgeInsets.all(10),
                       child: TextFormField(
-                          initialValue: _name,
                           decoration: const InputDecoration(
                             labelText: "Name",
                             border: OutlineInputBorder(
@@ -107,12 +97,12 @@ class _EditUserPageState extends State<EditUserPage> {
                         items: [
                           DropdownMenuItem(
                             value: 0,
-                            child: const Text("Employee"),
+                            child: Text("Employee"),
                             onTap: () => {_isManager = false},
                           ),
                           DropdownMenuItem(
                             value: 1,
-                            child: const Text("Manager"),
+                            child: Text("Manager"),
                             onTap: () => {_isManager = true},
                           ),
                         ],
@@ -124,19 +114,15 @@ class _EditUserPageState extends State<EditUserPage> {
                     TextButton(
                       style: Global.defaultButtonStyle,
                       onPressed: () async => {
-                        if (_key.currentState!.validate())
-                          {
-                            await _updateUser(),
-                          }
+                        if (_key.currentState!.validate()) {await _createUser()}
                       },
-                      child: const Text("Upload changes"),
+                      child: const Text("Create user"),
                     )
                   ],
                 )))));
   }
 
   Widget phoneNumberField() => TextFormField(
-        initialValue: widget.userdata['phoneNumber'],
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(
@@ -154,6 +140,13 @@ class _EditUserPageState extends State<EditUserPage> {
           LengthLimitingTextInputFormatter(Global.phoneNumberLength)
         ],
       );
+
+  _nameValidator(String? value) {
+    if (value!.isEmpty) {
+      return 'please enter a name';
+    }
+    return null;
+  }
 
   _phoneNumberValidator(String? value) {
     if (!Global.phoneNumberRegex.hasMatch(value!) ||
@@ -187,11 +180,34 @@ class _EditUserPageState extends State<EditUserPage> {
     return null;
   }
 
-  _nameValidator(String? value) {
-    if (value!.isEmpty) {
-      return 'please enter a name';
+  Future<void> _createUser() async {
+    _loadingToast();
+
+    User user = User(
+        name: _name,
+        isManager: _isManager,
+        email: '$_phoneNumber@fakeemail.com',
+        phoneNumber: _phoneNumber,
+        password: _password);
+
+    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
+        .httpsCallable('makeUser');
+    final resp = await callable.call(await user.toJson());
+
+    print("RESPONSE: ${resp.data}");
+
+    switch (resp.data) {
+      case 'auth/email-already-exists':
+        _userAlreadyExists();
+        break;
+
+      case 'auth/invalid-password':
+        _passwordtooShortToast();
+        break;
+
+      case 'success':
+        _successToast();
     }
-    return null;
   }
 
   _successToast() {
@@ -239,7 +255,7 @@ class _EditUserPageState extends State<EditUserPage> {
 
   _loadingToast() {
     showToast(
-      'Uploading changes...',
+      'Creating user...',
       position: ToastPosition.bottom,
       backgroundColor: Colors.grey,
       radius: 10.0,
@@ -250,35 +266,5 @@ class _EditUserPageState extends State<EditUserPage> {
       textAlign: TextAlign.center,
       duration: Duration(days: 365),
     );
-  }
-
-  Future<void> _updateUser() async {
-    _loadingToast();
-
-    User user = User(
-      isManager: _isManager,
-      email: '$_phoneNumber@fakeemail.com',
-      name: _name,
-      password: _password,
-      phoneNumber: _phoneNumber,
-    );
-
-    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
-        .httpsCallable('updateUser');
-
-    final resp = await callable.call(await user.toJson());
-
-    switch (resp.data) {
-      case 'auth/email-already-exists':
-        _userAlreadyExists();
-        break;
-
-      case 'auth/invalid-password':
-        _passwordtooShortToast();
-        break;
-
-      case 'success':
-        _successToast();
-    }
   }
 }

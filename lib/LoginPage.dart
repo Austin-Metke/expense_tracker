@@ -2,6 +2,7 @@ import 'package:expense_tracker/UserFunctions.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:oktoast/oktoast.dart';
 import 'Global.dart';
 
 class ExpenseTracker extends StatelessWidget {
@@ -9,9 +10,9 @@ class ExpenseTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-        home: Scaffold(resizeToAvoidBottomInset: true, body: LoginPage()),
-
+    return const OKToast(
+        child: MaterialApp(
+        home: Scaffold(resizeToAvoidBottomInset: true, body: LoginPage())),
     );
   }
 }
@@ -26,8 +27,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _key = GlobalKey<FormState>();
 
-  final phoneNumberRegex = RegExp(r'^[0-9]*$');
-  final phoneNumberLength = 10;
   late String _phoneNumber;
   late String _password;
   late bool _visPass = false;
@@ -44,7 +43,6 @@ class _LoginPageState extends State<LoginPage> {
       print("Valid form! $_phoneNumber $_password");
 
       try {
-        print("TEST");
         await Global.auth.signInWithCredential(credential).then((value) => _showUserFunctionPage());
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
@@ -81,11 +79,14 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             //Temporary Logo
 
-            const Image(
-                image: AssetImage("assets/cvcenterprise.png"),
-                height: 188,
-                width: 400),
-
+            const Align(
+              alignment: Alignment.topCenter,
+        child: Padding(
+              padding: EdgeInsets.all(10),
+              child: Image(
+                image: AssetImage("assets/cvcenterprise.png") ),
+            ),
+        ),
             //Phone number field
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -143,8 +144,8 @@ class _LoginPageState extends State<LoginPage> {
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
         inputFormatters: [
-          FilteringTextInputFormatter(phoneNumberRegex, allow: true),
-          LengthLimitingTextInputFormatter(phoneNumberLength)
+          FilteringTextInputFormatter(Global.phoneNumberRegex, allow: true),
+          LengthLimitingTextInputFormatter(Global.phoneNumberLength)
         ],
       );
 
@@ -204,9 +205,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _phoneNumberValidator(String? value) {
-    if (!phoneNumberRegex.hasMatch(value!) ||
+    if (!Global.phoneNumberRegex.hasMatch(value!) ||
         value.isEmpty ||
-        value.length < phoneNumberLength) {
+        value.length < Global.phoneNumberLength) {
       return 'Please enter a valid phone number';
     }
 

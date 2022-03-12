@@ -10,7 +10,7 @@ class Receipt {
   toJson() => _serializeToJson(this);
 
 
-  Receipt({required double? total, required File? image, String? comment}) {
+  Receipt({required double? total,  File? image, String? comment}) {
 
     _receiptTotal = total;
     _receiptImage = image;
@@ -20,19 +20,30 @@ class Receipt {
 
    Map<String, dynamic> _serializeToJson(Receipt receipt)  {
 
-    
-   final _imageAsBytes = File(receipt._receiptImage!.absolute.path).readAsBytesSync();
+   if(receipt._receiptImage == null) {
 
-   final _b64Enc = base64Encode(_imageAsBytes);
+     return <String, dynamic>{
+       'total': receipt._receiptTotal,
+       'comment': receipt._receiptComment,
+     };
+
+   } else {
+
+     final _imageAsBytes = File(receipt._receiptImage!.absolute.path).readAsBytesSync();
+
+     final _b64Enc = base64Encode(_imageAsBytes);
 
 
-    return <String, dynamic>{
+     return <String, dynamic>{
 
-      'image': _b64Enc,
-      'total': receipt._receiptTotal,
-      'comment': receipt._receiptComment,
-      'date': DateTime.now().microsecondsSinceEpoch,
-    };
+       'image': _b64Enc,
+       'total': receipt._receiptTotal,
+       'comment': receipt._receiptComment,
+       'date': DateTime.now().microsecondsSinceEpoch,
+     };
+
+   }
+
 
   }
 

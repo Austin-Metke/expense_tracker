@@ -77,7 +77,8 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                   //*************ImageButtons*************
                   Padding(
                     padding: const EdgeInsets.all(10),
-                    child: Row(
+                    child: FittedBox(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
@@ -141,7 +142,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                                   ]),
                             ),
                         ]),
-                  ),
+                    )),
 
                   //************TotalFormField***********
                   Padding(
@@ -214,9 +215,12 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       final image = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (image == null) return;
 
-      final imageFile = File(image.path);
+      final imageAsFile = File(image.path);
 
-      setState(() => _image = _stripImage(imageFile));
+    var strippedImage = await _stripImage(imageAsFile);
+
+    setState(() => _image = strippedImage);
+
     } on PlatformException catch (e) {
       print("Access to gallery was denied $e");
     }

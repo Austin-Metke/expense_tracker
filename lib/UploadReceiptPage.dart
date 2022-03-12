@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,27 +34,15 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     return OKToast(
         radius: 10,
         child: Scaffold(
+          appBar: AppBar(
+            title: Text("Upload Receipt"),
+          ),
           resizeToAvoidBottomInset: true,
           body: SingleChildScrollView(
             child: Form(
               key: _key,
               child: Column(
                 children: <Widget>[
-                   Align(
-                    alignment: Alignment.topCenter,
-                    child: SafeArea(
-                      top: true,
-                      child: Text(
-                      "Upload Receipt",
-                      style: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width *
-                            0.1,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      ),
-                    ),
-                  ),
-
                   //*************Image*************
                   Padding(
                     padding: const EdgeInsets.all(10),
@@ -94,9 +81,8 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.all(2.5),
-                            child: TextButton(
+
+                             TextButton(
                               style: Global.defaultButtonStyle,
                               child: Row(
                                 children: <Widget>[
@@ -105,6 +91,11 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                                     size: MediaQuery.of(context).size.width *
                                         0.050,
                                   ),
+
+                                  SizedBox(
+                                    width: MediaQuery.of(context).size.width * 0.0150,
+                                  ),
+
                                   Text(
                                     "Pick image from gallery",
                                     style: TextStyle(
@@ -117,10 +108,12 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                               ),
                               onPressed: () => getImage(),
                             ),
+
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.0150,
                           ),
-                          Padding(
-                            padding: EdgeInsets.all(5),
-                            child: TextButton(
+
+                          TextButton(
                               style: Global.defaultButtonStyle,
                               onPressed: () => getCamera(),
                               child: Row(
@@ -132,6 +125,11 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                                       size: MediaQuery.of(context).size.width *
                                           0.050,
                                     ),
+
+                                    SizedBox(
+                                      width: MediaQuery.of(context).size.width * 0.0150,
+                                    ),
+
                                     Text(
                                       "Take picture of receipt",
                                       style: TextStyle(
@@ -142,10 +140,8 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                                     ),
                                   ]),
                             ),
-                          ),
                         ]),
                   ),
-                  //**************************
 
                   //************TotalFormField***********
                   Padding(
@@ -237,7 +233,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
       setState(() => _image = strippedImage);
     } on PlatformException catch (e) {
-      print("Access to camera was denied $e");
+      _galleryDeniedToast();
     }
   }
 
@@ -344,6 +340,20 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     );
   }
 
+  _galleryDeniedToast() {
+    showToast(
+      'Unable to access gallery!',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.red,
+      radius: 10.0,
+      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.width *
+          0.035, color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+  }
+
+
   _loadingToast() {
     showToast(
       'Uploading...',
@@ -356,4 +366,5 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       textAlign: TextAlign.center,
     );
   }
+
 }

@@ -20,35 +20,42 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
         //Verifies custom claim of user to ensure they're a manager
         if ((await auth.getUser(claims.uid)).customClaims.isManager === true) {
 
-            console.log('User is a manager');
+            try {
+                console.log('User is a manager');
                 //Creates a user
-                return await auth.createUser({
+                const user = await auth.createUser({
                     displayName: data.name,
                     email: data.email,
                     password: data.password,
-                }).then(async (user) => {
-
-                    const customClaims = {
-                        isManager: data.isManager,
-                    };
-                    //Sets custom claim for user & creates document for user in firestore
-                    await auth.setCustomUserClaims(user.uid, customClaims).then(() => {
-                        console.log("CUSTOM CLAIM SET SUCCESSFULLY!");
-                    });
-
-                   await admin.firestore().doc('users/' + user.uid).set({
-                        name: user.displayName,
-                        isManager: data.isManager,
-                        email: user.email,
-                       phoneNumber: data.phoneNumber,
-                    });
-
-                   return 'success';
-
-                }).catch((reason) => {
-
-                    return reason.code;
                 });
+
+                const customClaims = {
+                    isManager: data.isManager,
+                };
+                //Sets custom claim for user
+                await auth.setCustomUserClaims(user.uid, customClaims).then(() => {
+
+                    console.log("Custom claims successfully set!")
+                });
+
+                //Creates document for user in firestore
+               return await firestore.collection("users").doc(user.uid).set({
+
+                  name: data.name,
+                  email: data.email,
+                   phoneNumber: data.phoneNumber,
+                   isManager: data.isManager,
+
+               }).then(() => {
+                   console.log("User document created successfully!");
+                   return 'success';
+               });
+
+            } catch (e) {
+                console.log("An error occured! " + e.code);
+                return e.code;
+            }
+
         } else {
             console.log('User is not a manager');
         }
@@ -58,7 +65,7 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
 exports.deleteData = functions.region('us-west2').auth.user().onDelete(async (user, context) => {
 
     //Recursively deletes all collections under user collection
-    await admin.firestore().recursiveDelete(admin.firestore().collection('users').doc(user.uid)).then(() => {
+    await firestore.recursiveDelete(firestore.collection('users').doc(user.uid)).then(() => {
 
         console.log("User " + user.uid + " data was successfully deleted!");
 
@@ -137,7 +144,7 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
                         console.log("CUSTOM CLAIM SET SUCCESSFULLY!");
                     });
 
-                       await admin.firestore().doc('users/' + user.uid).set({
+                       await firestore.doc('users/' + user.uid).set({
                            name: user.displayName,
                            isManager: data.isManager,
                            email: user.email,
@@ -148,10 +155,8 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
                     return "success";
 
 
-
                     }).catch((reason) => {
-
-                        return reason.code
+                        return reason.code;
 
                     });
                 }).catch((reason) => {
@@ -164,7 +169,45 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
     }
 });
 
-exports.getAllUsers = functions.region('us-west2').https.onCall(async (data, context) => {
 
+
+exports.getTotal = functions.region('us-west2').https.onCall(async (data, context) => {
+
+    if (await auth.getUser(context.auth.uid) !== null) {
+                var totalPerUser = 0;
+                var total = 0;
+
+                const usersQuerySnapshot = await firestore.collection('users').get();
+
+                //Loop over all users
+                for(let i = 0; i < usersQuerySnapshot.size; i++) {
+
+                    const usersDocReference = await usersQuerySnapshot.docs[i].ref;
+
+                    const receiptColReference = firestore.collection('users/' + usersDocReference.id + '/receipts');
+
+                    const receiptSnapshot = await receiptColReference.get();
+
+                    //Loop over all receipts in users receipt collection
+                    for(let j = 0; j < receiptSnapshot.size; j++) {
+
+                        const receiptDocReference = receiptSnapshot.docs[j];
+
+                        totalPerUser = totalPerUser + receiptDocReference.get('total');
+                        console.log("TOTALPERUSER: " + totalPerUser);
+
+                        if(j === receiptSnapshot.size - 1) {
+                            total = total + totalPerUser;
+                            totalPerUser = 0;
+                        }
+                    }
+                }
+
+                return total;
+
+    } else {
+        console.log("User does not exist!");
+    }
 
 });
+

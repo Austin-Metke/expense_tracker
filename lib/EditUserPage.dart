@@ -37,7 +37,10 @@ class _EditUserPageState extends State<EditUserPage> {
         radius: 10,
         child: Scaffold(
             appBar: AppBar(
-              title: Text("Edit ${_name}"),
+              backgroundColor: Global.colorBlue,
+
+              title: Text("Edit $_name"),
+              centerTitle: true,
             ),
             body: Form(
                 key: _key,
@@ -136,7 +139,7 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   Widget phoneNumberField() => TextFormField(
-        initialValue: widget.userdata['phoneNumber'],
+        initialValue: _phoneNumber,
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(
@@ -150,18 +153,14 @@ class _EditUserPageState extends State<EditUserPage> {
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
         inputFormatters: [
-          FilteringTextInputFormatter(Global.phoneNumberRegex, allow: true),
-          LengthLimitingTextInputFormatter(Global.phoneNumberLength)
+          Global.phoneInputFormatter
         ],
       );
 
   _phoneNumberValidator(String? value) {
-    if (!Global.phoneNumberRegex.hasMatch(value!) ||
-        value.isEmpty ||
-        value.length < Global.phoneNumberLength) {
+    if (value!.isEmpty || value.length < Global.phoneNumberLength) {
       return 'Please enter a valid phone number';
     }
-
     //return null if text is valid
     return null;
   }
@@ -196,12 +195,12 @@ class _EditUserPageState extends State<EditUserPage> {
 
   _successToast() {
     showToast(
-      'User \'$_name\' successfully created!',
+      'User \'$_name\' successfully updated!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
       radius: 10.0,
       textStyle: TextStyle(
-          fontSize: MediaQuery.of(context).size.width * 0.035,
+          fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
@@ -215,7 +214,7 @@ class _EditUserPageState extends State<EditUserPage> {
       backgroundColor: Colors.red,
       radius: 10.0,
       textStyle: TextStyle(
-        fontSize: MediaQuery.of(context).size.width * 0.035,
+        fontSize: MediaQuery.of(context).size.width * 0.040,
         color: Colors.white,
       ),
       dismissOtherToast: true,
@@ -223,19 +222,34 @@ class _EditUserPageState extends State<EditUserPage> {
     );
   }
 
-  _userAlreadyExists() {
+  _userAlreadyExistsToast() {
     showToast(
       'A user with that phone number already exists',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
       radius: 10.0,
       textStyle: TextStyle(
-          fontSize: MediaQuery.of(context).size.width * 0.035,
+          fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
     );
   }
+
+  _errorToast() {
+    showToast(
+      'An unknown error occurred!',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.red,
+      radius: 10.0,
+      textStyle: TextStyle(
+          fontSize: MediaQuery.of(context).size.width * 0.040,
+          color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+  }
+
 
   _loadingToast() {
     showToast(
@@ -244,11 +258,11 @@ class _EditUserPageState extends State<EditUserPage> {
       backgroundColor: Colors.grey,
       radius: 10.0,
       textStyle: TextStyle(
-          fontSize: MediaQuery.of(context).size.width * 0.035,
+          fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
-      duration: Duration(days: 365),
+      duration: const Duration(days: 365),
     );
   }
 
@@ -270,7 +284,7 @@ class _EditUserPageState extends State<EditUserPage> {
 
     switch (resp.data) {
       case 'auth/email-already-exists':
-        _userAlreadyExists();
+        _userAlreadyExistsToast();
         break;
 
       case 'auth/invalid-password':
@@ -279,6 +293,9 @@ class _EditUserPageState extends State<EditUserPage> {
 
       case 'success':
         _successToast();
+        break;
+      default:
+        _errorToast();
     }
   }
 }

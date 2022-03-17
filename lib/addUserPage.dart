@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:oktoast/oktoast.dart';
 import 'Global.dart';
 import 'User.dart';
@@ -28,7 +29,9 @@ class _AddUserPageState extends State<AddUserPage> {
         radius: 10,
         child: Scaffold(
             appBar: AppBar(
-              title: Text("Add a user"),
+              backgroundColor: Global.colorBlue,
+              centerTitle: true,
+              title: const Text("Add a user"),
             ),
             body: Form(
                 key: _key,
@@ -132,12 +135,11 @@ class _AddUserPageState extends State<AddUserPage> {
           hintText: "Phone number",
         ),
         validator: (value) => _phoneNumberValidator(value),
-        onChanged: (value) => _phoneNumber = value,
+        onChanged: (value) => _phoneNumber = toNumericString(value, allowHyphen: false),
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
         inputFormatters: [
-          FilteringTextInputFormatter(Global.phoneNumberRegex, allow: true),
-          LengthLimitingTextInputFormatter(Global.phoneNumberLength)
+          Global.phoneInputFormatter
         ],
       );
 
@@ -149,9 +151,7 @@ class _AddUserPageState extends State<AddUserPage> {
   }
 
   _phoneNumberValidator(String? value) {
-    if (!Global.phoneNumberRegex.hasMatch(value!) ||
-        value.isEmpty ||
-        value.length < Global.phoneNumberLength) {
+    if (value!.isEmpty || value.length < Global.phoneNumberLength) {
       return 'Please enter a valid phone number';
     }
 
@@ -207,6 +207,9 @@ class _AddUserPageState extends State<AddUserPage> {
 
       case 'success':
         _successToast();
+        break;
+      default:
+        _errorToast();
     }
   }
 
@@ -266,5 +269,20 @@ class _AddUserPageState extends State<AddUserPage> {
       textAlign: TextAlign.center,
       duration: Duration(days: 365),
     );
+  }
+
+  _errorToast() {
+    showToast(
+      'An unknown error occurred!',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.red,
+      radius: 10.0,
+      textStyle: TextStyle(
+          fontSize: MediaQuery.of(context).size.width * 0.035,
+          color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+
   }
 }

@@ -69,16 +69,22 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
                 return Container();
               }),
             ),
+         //   testFunctionButton(),
           ],
         ),
       ),
     );
   }
 
+  Widget testFunctionButton() => TextButton(
+      style: Global.defaultButtonStyle,
+      onPressed: ()  =>  _testFunction(),
+      child: const Text("Test function"));
+
   Widget _crudButton() => TextButton(
         style: Global.defaultButtonStyle,
         child: const Text("Manage users"),
-        onPressed: () async => _viewUserEditPage(),
+        onPressed: () async => await _viewUserEditPage(),
       );
 
   Widget _viewEmployeeReceiptsButton() => TextButton(
@@ -111,5 +117,18 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
         (value) => {isManager = value.claims!['isManager'], print(isManager)});
 
     return isManager;
+  }
+
+  Future<void> _testFunction() async {
+    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
+        .httpsCallable('getTotal');
+
+    final resp = await callable.call(<String, dynamic> {
+      'jwt': await Global.auth.currentUser!.getIdToken(),
+    });
+
+    print(resp.data);
+
+
   }
 }

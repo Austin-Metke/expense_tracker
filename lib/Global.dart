@@ -1,11 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-class Global {
+import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
+
+@immutable
+ class Global {
 
   static const Color colorBlue = Color(0xff5d5fef);
   static const phoneNumberLength = 10;
-  static RegExp phoneNumberRegex = RegExp(r'^[0-9]*$');
-
+  static MaskedInputFormatter phoneInputFormatter = MaskedInputFormatter('###-###-####');
+  static PosInputFormatter moneyInputFormatter = const PosInputFormatter(mantissaLength: 2, thousandsSeparator: ThousandsPosSeparator.comma);
+      static const double? defaultRadius = 10;
+  static const imageCompression = 50;
+  static const imageQuality = 30;
+  static const SizedBox defaultIconSpacing = SizedBox(
+    width: 5,
+  );
 
   static ButtonStyle defaultButtonStyle =  TextButton.styleFrom(
   shape: const StadiumBorder(),
@@ -13,7 +22,12 @@ class Global {
   backgroundColor: Global.colorBlue,
   primary: Colors.white,
   );
+
+
   static final FirebaseAuth auth = FirebaseAuth.instance;
 
 
+
+
 }
+

@@ -45,6 +45,7 @@ class DefaultFirebaseOptions {
     appId: '1:568463691126:android:4c0d1f203c8c3d4c633e57',
     messagingSenderId: '568463691126',
     projectId: 'expense-tracker-2ad46',
+    databaseURL: 'https://expense-tracker-2ad46-default-rtdb.firebaseio.com',
     storageBucket: 'expense-tracker-2ad46.appspot.com',
   );
 
@@ -53,7 +54,9 @@ class DefaultFirebaseOptions {
     appId: '1:568463691126:ios:1a177d65b7936a32633e57',
     messagingSenderId: '568463691126',
     projectId: 'expense-tracker-2ad46',
+    databaseURL: 'https://expense-tracker-2ad46-default-rtdb.firebaseio.com',
     storageBucket: 'expense-tracker-2ad46.appspot.com',
+    androidClientId: '568463691126-uus0pjfqin68necfdlsir590t35fhv1a.apps.googleusercontent.com',
     iosClientId: '568463691126-4oa5nbdojbjquubce1kqoudta4corol3.apps.googleusercontent.com',
     iosBundleId: 'com.cvcenterprise.expensetracker',
   );

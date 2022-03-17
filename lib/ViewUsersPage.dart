@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:expense_tracker/Global.dart';
+import 'package:expense_tracker/UserDetailsPage.dart';
 import 'package:expense_tracker/addUserPage.dart';
 import 'package:expense_tracker/EditUserPage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
+import 'Global.dart';
 
 class ViewUserPage extends StatefulWidget {
   const ViewUserPage({Key? key}) : super(key: key);
@@ -17,14 +19,27 @@ class ViewUserPage extends StatefulWidget {
 class _ViewUserPageState extends State<ViewUserPage> {
   final _userStream =
       FirebaseFirestore.instance.collection('users').snapshots();
-  late int selected;
+  late int? selected;
 
   late TapDownDetails _tapDownDetails;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        floatingActionButton: ElevatedButton(
+          onPressed: () => _showAddUserPage(),
+          child: FittedBox(
+              child: Row(
+            children: const [
+              Icon(Icons.person_add_alt),
+              Global.defaultIconSpacing,
+              Text("Add user"),
+            ],
+          )),
+          style: Global.defaultButtonStyle,
+        ),
         appBar: AppBar(
+          backgroundColor: Global.colorBlue,
           centerTitle: true,
           title: const Text("All Employees"),
           actions: [
@@ -33,11 +48,14 @@ class _ViewUserPageState extends State<ViewUserPage> {
                 return [
                   PopupMenuItem<int>(
                     value: 0,
-                    child: Row(
-                      children: const [
-                        Icon(Icons.person_add_alt, color: Colors.black),
-                        Text("Add user"),
-                      ],
+                    child: FittedBox(
+                      child: Row(
+                        children: const [
+                          Icon(Icons.person_add_alt, color: Colors.black),
+                          Global.defaultIconSpacing,
+                          Text("Add user"),
+                        ],
+                      ),
                     ),
                   ),
                 ];
@@ -66,7 +84,7 @@ class _ViewUserPageState extends State<ViewUserPage> {
                     document.data()! as Map<String, dynamic>;
                 return Column(children: [
                   InkWell(
-                      onTap: () async => {
+                      onLongPress: () async => {
                             selected = (await showMenu<int>(
                                 context: context,
                                 position: RelativeRect.fromLTRB(
@@ -77,20 +95,33 @@ class _ViewUserPageState extends State<ViewUserPage> {
                                 items: [
                                   PopupMenuItem<int>(
                                     value: 0,
-                                    child: GestureDetector(
-                                      child: const Text("Edit user"),
-                                    ),
+                                    child: FittedBox(
+                                        child: Row(
+                                      children: const [
+                                        Icon(Icons.edit),
+                                        Global.defaultIconSpacing,
+                                        Text("Edit user")
+                                      ],
+                                    )),
                                   ),
-                                  const PopupMenuItem<int>(
+                                  PopupMenuItem<int>(
                                     value: 1,
-                                    child: Text("Delete user"),
+                                    child: FittedBox(
+                                        child: Row(
+                                      children: const [
+                                        Icon(Icons.person_remove_outlined),
+                                        Global.defaultIconSpacing,
+                                        Text("Delete user"),
+                                      ],
+                                    )),
                                   ),
-                                ]))!,
+                                ])),
                             if (selected == 0)
                               {_showEditUserPage(data)}
                             else if (selected == 1)
                               {_deleteUser(data['email'])}
                           },
+                      onTap: () => _viewUserDetailsPage(userData: data),
                       onTapDown: (tapDownDetails) =>
                           _tapDownDetails = tapDownDetails,
                       child: Container(
@@ -148,9 +179,9 @@ class _ViewUserPageState extends State<ViewUserPage> {
     showToast('Deleting user...',
         position: ToastPosition.bottom,
         backgroundColor: Colors.grey,
-        radius: 10.0,
+        radius: Global.defaultRadius,
         textStyle: TextStyle(
-            fontSize: MediaQuery.of(context).size.width * 0.035,
+            fontSize: MediaQuery.of(context).size.width * 0.040,
             color: Colors.white),
         dismissOtherToast: true,
         textAlign: TextAlign.center,
@@ -162,9 +193,9 @@ class _ViewUserPageState extends State<ViewUserPage> {
       'You can\'t delete yourself!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
-        fontSize: MediaQuery.of(context).size.width * 0.035,
+        fontSize: MediaQuery.of(context).size.width * 0.040,
         color: Colors.white,
       ),
       dismissOtherToast: true,
@@ -174,12 +205,12 @@ class _ViewUserPageState extends State<ViewUserPage> {
 
   _successToast() {
     showToast(
-      'User successfully created!',
+      'User successfully deleted!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
-          fontSize: MediaQuery.of(context).size.width * 0.035,
+          fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
@@ -189,5 +220,13 @@ class _ViewUserPageState extends State<ViewUserPage> {
   _showAddUserPage() {
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => const AddUserPage()));
+  }
+
+  _viewUserDetailsPage({required Map<String, dynamic> userData}) {
+
+
+    Navigator.push(context, MaterialPageRoute(builder: (context) => UserDetailsPage(userData: userData)));
+
+
   }
 }

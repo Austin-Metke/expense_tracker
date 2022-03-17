@@ -28,7 +28,7 @@ class User {
       "password": user.password,
       "phoneNumber": user.phoneNumber,
       "email": user.email,
-      //TODO Fix later
+      //To do CRUD operations on a user, Java Web Token must be sent alongside user data
       'jwt': await Global.auth.currentUser?.getIdToken(),
       'isManager': user.isManager,
     };

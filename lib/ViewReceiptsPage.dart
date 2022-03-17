@@ -328,12 +328,12 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
     );
   }
 
-  _getTimeUploaded(int time) {
+  _getDateUploaded(int time) {
     return DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY)
         .format(DateTime.fromMicrosecondsSinceEpoch(time));
   }
 
-  _getDateUploaded(int time) {
+  _getTimeUploaded(int time) {
     return DateFormat(DateFormat.HOUR_MINUTE)
         .format(DateTime.fromMicrosecondsSinceEpoch(time));
   }

@@ -1,14 +1,15 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:oktoast/oktoast.dart';
 import 'Global.dart';
 import 'User.dart';
 
 class EditUserPage extends StatefulWidget {
-  final userdata;
+  final Map<String, dynamic> userData;
 
-  const EditUserPage({Key? key, this.userdata}) : super(key: key);
+  const EditUserPage({Key? key, required this.userData}) : super(key: key);
 
   @override
   _EditUserPageState createState() => _EditUserPageState();
@@ -19,16 +20,18 @@ class _EditUserPageState extends State<EditUserPage> {
 
   late String _password;
   String? _name;
-  String? _phoneNumber;
+  String? _oldphoneNumber;
+  String? _newphoneNumber;
   int? selectedItem;
   bool? _isManager;
 
   @override
   void initState() {
-    selectedItem = (widget.userdata['isManager'] ? 1 : 0);
-    _isManager = widget.userdata['isManager'];
-    _name = widget.userdata['name'];
-    _phoneNumber = widget.userdata['phoneNumber'];
+    super.initState();
+    selectedItem = (widget.userData['isManager'] ? 1 : 0);
+    _isManager = widget.userData['isManager'];
+    _name = widget.userData['name'];
+    _oldphoneNumber = widget.userData['phoneNumber'];
   }
 
   @override
@@ -139,7 +142,7 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   Widget phoneNumberField() => TextFormField(
-        initialValue: _phoneNumber,
+        initialValue: _oldphoneNumber,
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(
@@ -149,7 +152,7 @@ class _EditUserPageState extends State<EditUserPage> {
           hintText: "Phone number",
         ),
         validator: (value) => _phoneNumberValidator(value),
-        onChanged: (value) => _phoneNumber = value,
+        onChanged: (value) => _newphoneNumber = toNumericString(value),
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
         inputFormatters: [
@@ -271,10 +274,11 @@ class _EditUserPageState extends State<EditUserPage> {
 
     User user = User(
       isManager: _isManager,
-      email: '$_phoneNumber@fakeemail.com',
+      oldEmail: '$_oldphoneNumber@fakeemail.com',
+      email: '$_newphoneNumber@fakeemail.com',
       name: _name,
       password: _password,
-      phoneNumber: _phoneNumber,
+      phoneNumber: _newphoneNumber ?? _oldphoneNumber,
     );
 
     HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')

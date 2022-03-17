@@ -147,7 +147,7 @@ class _ViewUserPageState extends State<ViewUserPage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (BuildContext context) => EditUserPage(userdata: data)));
+            builder: (BuildContext context) => EditUserPage(userData: data)));
   }
 
   Future<void> _deleteUser(String email) async {

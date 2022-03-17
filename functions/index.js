@@ -126,7 +126,7 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
 
             if ((await auth.getUser(claims.uid)).customClaims.isManager === true) {
 
-                return auth.getUserByEmail(data.email).then((user) => {
+                return auth.getUserByEmail(data.oldEmail).then((user) => {
 
                    return  auth.updateUser(user.uid,{
                        email: data.email,

@@ -115,7 +115,6 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                     return _getDocumentListView(snapshot);
                   }
                 }
-
                 return _getDocumentListView(snapshot);
               },
             )));
@@ -135,18 +134,17 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   }
 
   _showUploadReceiptPage() {
-    Navigator.push(
-        context,
+    Navigator.push(context,
         MaterialPageRoute(
             builder: (BuildContext context) => const ReceiptUploadPage()));
   }
 
-  _showEditReceiptPage(Map<String, dynamic> data, String? receiptID) {
+  _showEditReceiptPage({required Map<String, dynamic> receiptData, required String? receiptID}) {
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (BuildContext context) => EditReceiptPage(
-                  receiptData: data,
+                  receiptData: receiptData,
                   receiptID: receiptID,
                 )));
   }
@@ -160,12 +158,12 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
         .catchError((onError) => _errorToast());
   }
 
-  //Updates the users document in Firestore with the cumulative total of all receipts
+  //Updates the users document in Firestore with the cumulative total of all receipts and amount of receipts uploaded
   Future<void> _updateCumulativeTotal() async {
     final receiptCollectionReference =
         dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
 
-    double total = 0.0;
+    double total = 0;
 
     final receiptQuerySnapshot = await receiptCollectionReference.get();
 
@@ -176,7 +174,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
 
     dbRef.doc(Global.auth.currentUser?.uid).update(<String, dynamic>{
       'total': double.parse(total.toStringAsFixed(2)),
-      'uploadedReceipts': receiptQuerySnapshot.docs.length
+      'uploadedReceipts': receiptQuerySnapshot.docs.length,
     });
   }
 
@@ -243,7 +241,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   Widget _getDocumentListView(AsyncSnapshot<QuerySnapshot> snapshot) {
     return ListView(
       children: snapshot.data!.docs.map((DocumentSnapshot document) {
-        Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
+        Map<String, dynamic> receiptData = document.data()! as Map<String, dynamic>;
 
         return InkWell(
           onTap: () async => {
@@ -280,7 +278,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                   0),
             ),
             if (selectedValue == 0)
-              {_showEditReceiptPage(data, document.id)}
+              {_showEditReceiptPage(receiptData: receiptData, receiptID: document.id)}
             else if (selectedValue == 1)
               {
                 _deleteReceipt(document.id),
@@ -293,33 +291,33 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
               child: Column(
                 children: [
                   Image.memory(
-                    base64Decode(data['image']),
+                    base64Decode(receiptData['image']),
                   ),
 
                   Text(
-                    "Total: ${NumberFormat.simpleCurrency().format(data['total'])}",
+                    "Total: ${NumberFormat.simpleCurrency().format(receiptData['total'])}",
                     style: const TextStyle(
                       fontSize: 18,
                     ),
                   ),
 
                   //If data['comment'] is null or empty, display Text("none") to prevent build() from breaking
-                  (data['comment'] == null || data['comment'] == "")
+                  (receiptData['comment'] == null || receiptData['comment'] == "")
                       ? const Text("Comment: none",
                           style: TextStyle(
                             fontSize: 18,
                           ))
                       : Text(
-                          "Comment: ${data['comment'] ?? "none"}",
+                          "Comment: ${receiptData['comment'] ?? "none"}",
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 18,
                           ),
                         ),
                   //If a date isn't entered as an int (somehow), display a Text() to prevent build() from breaking
-                  data['date'] is int
+                  receiptData['date'] is int
                       ? Text(
-                          "Uploaded on: ${_getDateUploaded(data['date'])} at ${_getTimeUploaded(data['date'])}")
+                          "Uploaded on: ${_getDateUploaded(receiptData['date'])} at ${_getTimeUploaded(receiptData['date'])}")
                       : const Text("Unknown"),
                 ],
               )),

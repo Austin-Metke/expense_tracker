@@ -119,7 +119,7 @@ class _ViewUserPageState extends State<ViewUserPage> {
                             if (selected == 0)
                               {_showEditUserPage(data)}
                             else if (selected == 1)
-                              {_deleteUser(data['email'])}
+                              {_deleteUser(data['email'], data['name'])}
                           },
                       onTap: () => _viewUserDetailsPage(userData: data),
                       onTapDown: (tapDownDetails) =>
@@ -150,7 +150,7 @@ class _ViewUserPageState extends State<ViewUserPage> {
             builder: (BuildContext context) => EditUserPage(userData: data)));
   }
 
-  Future<void> _deleteUser(String email) async {
+  Future<void> _deleteUser(String email, String name) async {
     _loadingToast();
 
     final functions = FirebaseFunctions.instanceFor(region: 'us-west2');
@@ -168,7 +168,7 @@ class _ViewUserPageState extends State<ViewUserPage> {
         break;
 
       case 'success':
-        _successToast();
+        _successToast(name);
         break;
 
       default:
@@ -203,9 +203,9 @@ class _ViewUserPageState extends State<ViewUserPage> {
     );
   }
 
-  _successToast() {
+  _successToast(String name) {
     showToast(
-      'User successfully deleted!',
+      'User $name successfully deleted!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
       radius: Global.defaultRadius,

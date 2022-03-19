@@ -24,7 +24,15 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
 
             //Sets custom claims for user
             await auth.setCustomUserClaims(newUser.uid, {
-               isManager: data.isManager,
+                isManager: data.isManager,
+            });
+
+            await firestore.doc('users/' + newUser.uid).create({
+                email: data.email,
+                isManager: data.isManager,
+                name: data.name,
+                phoneNumber: data.phoneNumber,
+
             });
 
             return 'success';

@@ -69,7 +69,7 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
                 return Container();
               }),
             ),
-         //   testFunctionButton(),
+            testFunctionButton(),
           ],
         ),
       ),
@@ -78,7 +78,7 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
 
   Widget testFunctionButton() => TextButton(
       style: Global.defaultButtonStyle,
-      onPressed: ()  =>  _testFunction(),
+      onPressed: ()  => _testFunction(),
       child: const Text("Test function"));
 
   Widget _crudButton() => TextButton(
@@ -119,15 +119,15 @@ class _UserFunctionsPageState extends State<UserFunctionsPage> {
     return isManager;
   }
 
+
   Future<void> _testFunction() async {
-    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
-        .httpsCallable('getTotal');
 
-    final resp = await callable.call(<String, dynamic> {
-      'jwt': await Global.auth.currentUser!.getIdToken(),
-    });
+    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2').httpsCallable('testFunction');
 
-    print(resp.data);
+    final results =  await callable();
+
+
+    print(results.data);
 
 
   }

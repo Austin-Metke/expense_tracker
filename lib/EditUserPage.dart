@@ -151,8 +151,8 @@ class _EditUserPageState extends State<EditUserPage> {
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
         ),
-        validator: (value) => _phoneNumberValidator(value),
-        onChanged: (value) => _newphoneNumber = toNumericString(value),
+        validator: (value) => _phoneNumberValidator(toNumericString(value, allowPeriod: false, allowHyphen: false)),
+        onChanged: (value) => _newphoneNumber = toNumericString(value, allowHyphen: false, allowPeriod: false),
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
         inputFormatters: [
@@ -275,7 +275,7 @@ class _EditUserPageState extends State<EditUserPage> {
     User user = User(
       isManager: _isManager,
       oldEmail: '$_oldphoneNumber@fakeemail.com',
-      email: '$_newphoneNumber@fakeemail.com',
+      email: '${_newphoneNumber ?? _oldphoneNumber}@fakeemail.com',
       name: _name,
       password: _password,
       phoneNumber: _newphoneNumber ?? _oldphoneNumber,
@@ -286,6 +286,7 @@ class _EditUserPageState extends State<EditUserPage> {
 
     final resp = await callable.call(await user.toJson());
 
+    print(resp.data);
     switch (resp.data) {
       case 'auth/email-already-exists':
         _userAlreadyExistsToast();

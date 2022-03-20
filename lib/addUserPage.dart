@@ -134,7 +134,7 @@ class _AddUserPageState extends State<AddUserPage> {
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
         ),
-        validator: (value) => _phoneNumberValidator(value),
+        validator: (value) => _phoneNumberValidator(toNumericString(value, allowPeriod: false, allowHyphen: false)),
         onChanged: (value) => _phoneNumber = toNumericString(value, allowHyphen: false),
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,

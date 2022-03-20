@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:expense_tracker/UserFunctions.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,13 +44,14 @@ class _LoginPageState extends State<LoginPage> {
 
     if (formState!.validate()) {
 
-      var credential = EmailAuthProvider.credential(
+      var emailCredential = EmailAuthProvider.credential(
           email: _phoneNumber + "@fakeemail.com", password: _password);
-      print("Valid form! $_phoneNumber $_password");
-
       try {
-        await Global.auth.signInWithCredential(credential).then((value) =>
-            _showUserFunctionPage());
+        await Global.auth.signInWithCredential(emailCredential);
+        _showUserFunctionPage();
+
+
+
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
           case 'user-not-found':
@@ -146,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
         ),
-        validator: (value) => _phoneNumberValidator(value),
+        validator: (value) => _phoneNumberValidator(toNumericString(value, allowPeriod: false, allowHyphen: false)),
         onChanged: (value) => _phoneNumber = toNumericString(value, allowHyphen: false, allowPeriod: false),
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
@@ -230,4 +232,6 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => const UserFunctionsPage()));
   }
+
+
 }

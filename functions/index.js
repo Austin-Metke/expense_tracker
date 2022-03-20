@@ -1,6 +1,5 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-
 admin.initializeApp();
 
 const auth = admin.auth();
@@ -19,7 +18,6 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
                 displayName: data.name,
                 email: data.email,
                 password: data.password,
-
             });
 
             //Sets custom claims for user
@@ -32,7 +30,6 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
                 isManager: data.isManager,
                 name: data.name,
                 phoneNumber: data.phoneNumber,
-
             });
 
             return 'success';
@@ -83,20 +80,39 @@ exports.deleteUser = functions.region('us-west2').https.onCall(async (data, cont
 
 exports.updateUser = functions.region('us-west2').https.onCall(async (data, context) => {
 
-
     let user = await auth.getUser(context.auth.uid);
 
     if(user.customClaims.isManager) {
 
-        let updatedUser = await auth.getUserByEmail(data.oldEmail);
+        try {
+            console.log(data.oldEmail);
+            let updatedUser = await auth.getUserByEmail(data.oldEmail);
 
-        updatedUser.customClaims = {
-            isManager: data.isManager
-        };
+            await auth.setCustomUserClaims(updatedUser.uid, {
+                isManager: data.isManager
+            });
 
-        updatedUser.email = data.email;
-        updatedUser.displayName = data.name;
 
+            await auth.updateUser(updatedUser.uid, {
+
+                displayName: data.name,
+                email: data.email,
+                password: data.password,
+            });
+
+            await firestore.doc('users/' + updatedUser.uid).update({
+                email: data.email,
+                isManager: data.isManager,
+                name: data.name,
+                phoneNumber: data.phoneNumber,
+            });
+
+            return 'success';
+
+        } catch (reason) {
+            console.log("An error occurred updating user! " + reason.code);
+            return reason.code;
+        }
     }
 });
 
@@ -111,7 +127,7 @@ exports.getTotal = functions.region('us-west2').https.onCall(async (data, contex
 
         const usersQuerySnapshot = await firestore.collection('users').get();
 
-        for(let i = 9; i < usersQuerySnapshot.size; i++) {
+        for(let i = 0; i < usersQuerySnapshot.size; i++) {
 
             const usersDocReference = await usersQuerySnapshot.docs[i].ref;
 
@@ -130,7 +146,7 @@ exports.getTotal = functions.region('us-west2').https.onCall(async (data, contex
                 }
             }
         }
+        return cumulativeTotal;
     }
-
-
 });
+

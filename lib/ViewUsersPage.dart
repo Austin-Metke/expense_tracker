@@ -4,7 +4,6 @@ import 'package:expense_tracker/Global.dart';
 import 'package:expense_tracker/UserDetailsPage.dart';
 import 'package:expense_tracker/addUserPage.dart';
 import 'package:expense_tracker/EditUserPage.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'Global.dart';
@@ -17,8 +16,7 @@ class ViewUserPage extends StatefulWidget {
 }
 
 class _ViewUserPageState extends State<ViewUserPage> {
-  final _userStream =
-      FirebaseFirestore.instance.collection('users').snapshots();
+  var _userStream = FirebaseFirestore.instance.collection('users').snapshots();
   late int? selected;
 
   late TapDownDetails _tapDownDetails;
@@ -78,69 +76,74 @@ class _ViewUserPageState extends State<ViewUserPage> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Text('Loading...');
             }
-            return ListView(
-              children: snapshot.data!.docs.map((DocumentSnapshot document) {
-                Map<String, dynamic> data =
-                    document.data()! as Map<String, dynamic>;
-                return Column(children: [
-                  InkWell(
-                      onLongPress: () async => {
-                            selected = (await showMenu<int>(
-                                context: context,
-                                position: RelativeRect.fromLTRB(
-                                    0,
-                                    _tapDownDetails.globalPosition.dy,
-                                    _tapDownDetails.globalPosition.dx,
-                                    0),
-                                items: [
-                                  PopupMenuItem<int>(
-                                    value: 0,
-                                    child: FittedBox(
-                                        child: Row(
-                                      children: const [
-                                        Icon(Icons.edit),
-                                        Global.defaultIconSpacing,
-                                        Text("Edit user")
-                                      ],
-                                    )),
-                                  ),
-                                  PopupMenuItem<int>(
-                                    value: 1,
-                                    child: FittedBox(
-                                        child: Row(
-                                      children: const [
-                                        Icon(Icons.person_remove_outlined),
-                                        Global.defaultIconSpacing,
-                                        Text("Delete user"),
-                                      ],
-                                    )),
-                                  ),
-                                ])),
-                            if (selected == 0)
-                              {_showEditUserPage(data)}
-                            else if (selected == 1)
-                              {_deleteUser(data['email'], data['name'])}
-                          },
-                      onTap: () => _viewUserDetailsPage(userData: data),
-                      onTapDown: (tapDownDetails) =>
-                          _tapDownDetails = tapDownDetails,
-                      child: Container(
-                        margin: const EdgeInsets.all(10),
-                        color: Colors.white10,
-                        child: Row(children: <Widget>[
-                          const Icon(Icons.person_outline),
-                          data['name'] != Global.auth.currentUser!.displayName
-                              ? Text(
-                                  "User: ${data['name']}, Manager: ${data['isManager']}")
-                              : Text(
-                                  "User: ${data['name']} (you), Manager: ${data['isManager']}"),
-                        ]),
-                      )),
-                ]);
-              }).toList(),
-            );
+
+            return RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: _getUserListView(snapshot));
           },
         ));
+  }
+
+  Widget _getUserListView(AsyncSnapshot<QuerySnapshot> snapshot) {
+    return ListView(
+      children: snapshot.data!.docs.map((DocumentSnapshot document) {
+        Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
+        return Column(children: [
+          InkWell(
+              onLongPress: () async => {
+                    selected = (await showMenu<int>(
+                        context: context,
+                        position: RelativeRect.fromLTRB(
+                            0,
+                            _tapDownDetails.globalPosition.dy,
+                            _tapDownDetails.globalPosition.dx,
+                            0),
+                        items: [
+                          PopupMenuItem<int>(
+                            value: 0,
+                            child: FittedBox(
+                                child: Row(
+                              children: const [
+                                Icon(Icons.edit),
+                                Global.defaultIconSpacing,
+                                Text("Edit user")
+                              ],
+                            )),
+                          ),
+                          PopupMenuItem<int>(
+                            value: 1,
+                            child: FittedBox(
+                                child: Row(
+                              children: const [
+                                Icon(Icons.person_remove_outlined),
+                                Global.defaultIconSpacing,
+                                Text("Delete user"),
+                              ],
+                            )),
+                          ),
+                        ])),
+                    if (selected == 0)
+                      {_showEditUserPage(data)}
+                    else if (selected == 1)
+                      {_deleteUser(data['email'], data['name'])}
+                  },
+              onTap: () => _viewUserDetailsPage(userData: data),
+              onTapDown: (tapDownDetails) => _tapDownDetails = tapDownDetails,
+              child: Container(
+                margin: const EdgeInsets.all(10),
+                color: Colors.white10,
+                child: Row(children: <Widget>[
+                  const Icon(Icons.person_outline),
+                  data['name'] != Global.auth.currentUser!.displayName
+                      ? Text(
+                          "User: ${data['name']}, Manager: ${data['isManager']}")
+                      : Text(
+                          "User: ${data['name']} (you), Manager: ${data['isManager']}"),
+                ]),
+              )),
+        ]);
+      }).toList(),
+    );
   }
 
   _showEditUserPage(Map<String, dynamic> data) {
@@ -223,10 +226,18 @@ class _ViewUserPageState extends State<ViewUserPage> {
   }
 
   _viewUserDetailsPage({required Map<String, dynamic> userData}) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => UserDetailsPage(userData: userData)));
+  }
 
+  _getStream() {
+    return FirebaseFirestore.instance.collection('users').snapshots();
+  }
 
-    Navigator.push(context, MaterialPageRoute(builder: (context) => UserDetailsPage(userData: userData)));
-
-
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _userStream = _getStream());
   }
 }

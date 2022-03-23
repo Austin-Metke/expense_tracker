@@ -116,17 +116,29 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
     }
 });
 
-exports.getTotal = functions.region('us-west2').https.onCall(async (data, context) => {
+exports.getExpenses = functions.region('us-west2').https.onCall(async (data, context) => {
 
     let user = await auth.getUser(context.auth.uid);
 
     if(user.customClaims.isManager) {
 
+        const usersQuerySnapshot = await firestore.collection('users').get();
+
+        let toolsTotal = 0;
+        let travelTotal = 0;
+        let foodTotal = 0;
+        let otherTotal = 0;
+
+
         let cumulativeTotal = 0;
         let perUserTotal = 0;
 
-        const usersQuerySnapshot = await firestore.collection('users').get();
 
+        let toolsExpensesMade = 0;
+        let travelExpensesMade = 0;
+        let foodExpensesMade = 0;
+        let otherExpensesMade = 0;
+        let totalExpensesMade = 0;
         for(let i = 0; i < usersQuerySnapshot.size; i++) {
 
             const usersDocReference = await usersQuerySnapshot.docs[i].ref;
@@ -137,8 +149,29 @@ exports.getTotal = functions.region('us-west2').https.onCall(async (data, contex
 
             for(let j = 0; j < receiptSnapshot.size; j++) {
                 const receiptDocReference = receiptSnapshot.docs[j];
-
                 perUserTotal += receiptDocReference.get('total');
+
+                switch(receiptDocReference.get('expenseType')) {
+                    case "Food":
+                        foodTotal += receiptDocReference.get('total');
+                        foodExpensesMade++;
+                        totalExpensesMade++;
+                        break;
+                    case "Tools":
+                        toolsTotal += receiptDocReference.get('total');
+                        totalExpensesMade++;
+                        toolsExpensesMade++;
+                        break;
+                    case "Travel":
+                        travelTotal += receiptDocReference.get('total');
+                        totalExpensesMade++;
+                        travelExpensesMade++;
+                        break;
+                    case "Other":
+                        otherTotal += receiptDocReference.get('total');
+                        totalExpensesMade++;
+                        otherExpensesMade++;
+                }
 
                 if(j === receiptSnapshot.size - 1) {
                     cumulativeTotal += perUserTotal;
@@ -146,7 +179,7 @@ exports.getTotal = functions.region('us-west2').https.onCall(async (data, contex
                 }
             }
         }
-        return cumulativeTotal;
+        return [foodTotal/100, toolsTotal/100, travelTotal/100, otherTotal/100, cumulativeTotal/100, foodExpensesMade, toolsExpensesMade, travelExpensesMade, otherExpensesMade, totalExpensesMade];
     }
 });
 

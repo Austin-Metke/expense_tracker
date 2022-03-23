@@ -44,6 +44,8 @@ dependencies:
   cloud_functions: ^3.2.7
   algolia: ^1.0.4
   flutter_easyloading: ^3.0.3
+  syncfusion_flutter_charts: ^19.4.56
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

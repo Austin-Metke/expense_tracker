@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_tracker/Global.dart';
 import 'package:expense_tracker/UploadReceiptPage.dart';
@@ -18,9 +19,10 @@ class ViewUploadedReceiptsPage extends StatefulWidget {
 class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   final dbRef = FirebaseFirestore.instance.collection('users');
 
-  final Stream<QuerySnapshot> _receiptStream = FirebaseFirestore.instance
+   Stream<QuerySnapshot> _receiptStream = FirebaseFirestore.instance
       .collection('users/${Global.auth.currentUser!.uid}/receipts')
       .snapshots();
+
   final Stream<QuerySnapshot> _receiptStreamByTotal = FirebaseFirestore.instance
       .collection('users/${Global.auth.currentUser!.uid}/receipts')
       .orderBy('total', descending: true)
@@ -58,10 +60,9 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                 PopupMenuButton(
                     itemBuilder: (context) {
                       return [
-                        PopupMenuItem<int>(
+                        const PopupMenuItem<int>(
                           value: 0,
-                          child: const Text("Add Receipt"),
-                          onTap: () => null,
+                          child: Text("Add Receipt"),
                         ),
                         PopupMenuItem<int>(
                           value: 1,
@@ -111,10 +112,14 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                     return const Center(
                         child: Text("An unknown error has occurred"));
                   } else if (snapshot.hasData) {
-                    return _getDocumentListView(snapshot);
-                  }
+                    return RefreshIndicator(
+                        onRefresh:() => _onRefresh(),
+
+                        child: _getDocumentListView(snapshot));                  }
                 }
-                return _getDocumentListView(snapshot);
+                return RefreshIndicator(
+                    onRefresh: () => _onRefresh(),
+                    child: _getDocumentListView(snapshot));
               },
             )));
   }
@@ -133,12 +138,14 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   }
 
   _showUploadReceiptPage() {
-    Navigator.push(context,
+    Navigator.push(
+        context,
         MaterialPageRoute(
             builder: (BuildContext context) => const ReceiptUploadPage()));
   }
 
-  _showEditReceiptPage({required Map<String, dynamic> receiptData, required String? receiptID}) {
+  _showEditReceiptPage(
+      {required Map<String, dynamic> receiptData, required String? receiptID}) {
     Navigator.push(
         context,
         MaterialPageRoute(
@@ -240,7 +247,13 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   Widget _getDocumentListView(AsyncSnapshot<QuerySnapshot> snapshot) {
     return ListView(
       children: snapshot.data!.docs.map((DocumentSnapshot document) {
-        Map<String, dynamic> receiptData = document.data()! as Map<String, dynamic>;
+        Map<String, dynamic> receiptData =
+            document.data()! as Map<String, dynamic>;
+        double total = receiptData['total'] / 100;
+        String? comment = receiptData['comment'];
+        int? date = receiptData['date'];
+        Uint8List image = base64Decode(receiptData['image']);
+        String expenseType = receiptData['expenseType'];
 
         return InkWell(
           onTap: () async => {
@@ -277,7 +290,10 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                   0),
             ),
             if (selectedValue == 0)
-              {_showEditReceiptPage(receiptData: receiptData, receiptID: document.id)}
+              {
+                _showEditReceiptPage(
+                    receiptData: receiptData, receiptID: document.id)
+              }
             else if (selectedValue == 1)
               {
                 _deleteReceipt(document.id),
@@ -289,37 +305,27 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
               color: const Color.fromARGB(100, 121, 121, 121),
               child: Column(
                 children: [
-                  Image.memory(
-                    base64Decode(receiptData['image']),
-                  ),
+                  Image.memory(image),
 
                   Text(
-                    "Total: ${NumberFormat.simpleCurrency().format(receiptData['total'])}",
+                    "Total: ${NumberFormat.simpleCurrency().format(total)}",
                     style: const TextStyle(
                       fontSize: 18,
                     ),
                   ),
 
-                  //If data['comment'] is null or empty, display Text("none") to prevent build() from breaking
-                  (receiptData['comment'] == null || receiptData['comment'] == "")
-                      ? const Text("Comment: none",
-                          style: TextStyle(
-                            fontSize: 18,
-                          ))
-                      : Text(
-                          "Comment: ${receiptData['comment'] ?? "none"}",
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
-                          ),
-                        ),
-                  //If a date isn't entered as an int (somehow), display a Text() to prevent build() from breaking
-                  receiptData['date'] is int
-                      ? Text(
-                          "Uploaded on: ${_getDateUploaded(receiptData['date'])} at ${_getTimeUploaded(receiptData['date'])}")
-                      : const Text("Unknown"),
-                ],
+              Text("Expense type: $expenseType", style: const TextStyle(
+                fontSize: 18,
               )),
+              Text("Comment: ${(comment != null || comment == "" ? comment : "none")}",
+                        style: const TextStyle(
+                          fontSize: 18,
+                        )),
+
+                  //Ternary operation to ensure build() doesn't break on the off-chance an upload date isn't stored
+                  Text("Uploaded on: ${(date is int ? "${_getDateUploaded(date)} at ${_getTimeUploaded(date)}" : "Unknown")}")
+
+              ])),
         );
       }).toList(),
     );
@@ -333,5 +339,10 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   _getTimeUploaded(int time) {
     return DateFormat(DateFormat.HOUR_MINUTE)
         .format(DateTime.fromMicrosecondsSinceEpoch(time));
+  }
+
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _receiptStream = _getStream());
   }
 }

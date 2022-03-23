@@ -22,12 +22,13 @@ class EditReceiptPage extends StatefulWidget {
 }
 
 class _EditReceiptPageState extends State<EditReceiptPage> {
+  final _key = GlobalKey<FormState>();
+
   double? _total;
   String? _encodedImage;
-  final _key = GlobalKey<FormState>();
   File? _image;
   String? _comment;
-  final _format = MoneyInputFormatter(leadingSymbol: MoneySymbols.DOLLAR_SIGN);
+  String? _expenseType;
   var _enableButton = true;
   final _characterLimit = 300;
   late final String? _receiptID;
@@ -37,10 +38,11 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
   @override
   void initState() {
     super.initState();
-    _total = widget.receiptData['total'];
+    _total = widget.receiptData['total'] / 100;
     _comment = widget.receiptData['comment'];
     _encodedImage = widget.receiptData['image'];
     _receiptID = widget.receiptID;
+    _expenseType = widget.receiptData['expenseType'];
   }
 
   @override
@@ -158,7 +160,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: TextFormField(
-                      initialValue: _total.toString(),
+                      initialValue: _total!.toStringAsFixed(2),
                       decoration: const InputDecoration(
                         labelText: "Receipt Total",
                         prefixText: "\$ ",
@@ -168,8 +170,9 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                       ),
                       showCursor: true,
                       keyboardType: TextInputType.number,
-                      onChanged: (value) =>
-                          _total = double.parse(toNumericString(value, allowHyphen: false, allowPeriod: true)),
+                      onChanged: (value) => _total = double.parse(
+                          toNumericString(value,
+                              allowHyphen: false, allowPeriod: false)),
                       onFieldSubmitted: (value) =>
                           _key.currentState?.validate(),
                       validator: (value) => _validateTotal(value),
@@ -198,6 +201,36 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                     ),
                   ),
                   //**********************************
+
+
+
+                  //**********ExpenseTypeDrownDownMenu*********
+                  DropdownButton<String>(
+
+                      value: _expenseType,
+                      items: const [
+
+                        DropdownMenuItem<String>(
+                          child: Text("Travel"),
+                          value: ExpenseType.travel,
+                        ),
+                        DropdownMenuItem<String>(
+                          child: Text("Food"),
+                          value: ExpenseType.food,
+                        ),
+                        DropdownMenuItem<String>(
+                          child: Text("Tools"),
+                          value: ExpenseType.tools,
+                        ),
+                        DropdownMenuItem<String>(
+                          child: Text("Other"),
+                          value: ExpenseType.other,
+                        ),
+
+                      ], onChanged: (value) => setState(() => _expenseType = value!)),
+                  //**********************************
+
+
 
                   //************UploadButton**********
                   Padding(
@@ -258,22 +291,19 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
     _uploadWait();
 
     Receipt receipt = (_image == null)
-        ? Receipt(total: _total, comment: _comment)
-        : Receipt(total: _total, comment: _comment, image: _image);
+        ? Receipt(total: _total, comment: _comment, expenseType: _expenseType)
+        : Receipt(total: _total, comment: _comment, image: _image, expenseType: _expenseType);
 
     await FirebaseFirestore.instance
         .doc("users/${Global.auth.currentUser!.uid}/receipts/$_receiptID")
         .update(receipt.toJson())
-        .then((value) => {
-          _uploadSuccess(),
-      _updateCumulativeTotal()
-    })
+        .then((value) => {_uploadSuccess(), _updateCumulativeTotal()})
         .onError((error, stackTrace) => _uploadFail());
   }
 
   Future<void> _updateCumulativeTotal() async {
     final receiptCollectionReference =
-    dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
+        dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
 
     double total = 0.0;
 
@@ -291,7 +321,9 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
   }
 
   _validateTotal(String? value) {
-    if (value!.isEmpty || _total!.isNaN || double.parse(toNumericString(value)) == 0) {
+    if (value!.isEmpty ||
+        _total!.isNaN ||
+        double.parse(toNumericString(value)) == 0) {
       return 'Please enter a total for your receipt';
     }
 

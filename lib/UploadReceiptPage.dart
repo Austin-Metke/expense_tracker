@@ -22,8 +22,10 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
   double? _receiptTotal;
   String? _comment;
   var _enableButton = true;
+  String _expenseType = ExpenseType.travel;
   final _characterLimit = 300;
   final dbRef = FirebaseFirestore.instance.collection('users');
+
   @override
   Widget build(BuildContext context) {
     return OKToast(
@@ -144,13 +146,13 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                       keyboardType: TextInputType.number,
                       onChanged: (value) => _receiptTotal = double.tryParse(
                           toNumericString(value,
-                              allowPeriod: true, allowHyphen: false)),
+                              allowPeriod: false, allowHyphen: false)),
                       onFieldSubmitted: (value) =>
                           _key.currentState?.validate(),
                       validator: (value) => _validateTotal(toNumericString(
                           value,
                           allowHyphen: false,
-                          allowPeriod: true)),
+                          allowPeriod: false)),
                       inputFormatters: [Global.moneyInputFormatter],
                     ),
                   ),
@@ -174,6 +176,35 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                       maxLength: _characterLimit,
                     ),
                   ),
+                  //**********************************
+
+                  //**********ExpenseTypeDrownDownMenu*********
+
+                  DropdownButton<String>(
+                    value: _expenseType,
+
+                      hint: const Text("Expense Type"),
+                      items: const [
+                        DropdownMenuItem<String>(
+                          child: Text("Travel"),
+                          value: ExpenseType.travel,
+                        ),
+                        DropdownMenuItem<String>(
+                          child: Text("Food"),
+                          value: ExpenseType.food,
+                        ),
+                        DropdownMenuItem<String>(
+                          child: Text("Tools"),
+                          value: ExpenseType.tools,
+                        ),
+                        DropdownMenuItem<String>(
+                          child: Text("Other"),
+                          value: ExpenseType.other,
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _expenseType = value!)),
+
                   //**********************************
 
                   //************UploadButton**********
@@ -237,8 +268,11 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     if (formState!.validate() && _validateImage(_image)) {
       _uploadWait();
 
-      final Receipt receipt =
-          Receipt(image: _image, total: _receiptTotal, comment: _comment);
+      final Receipt receipt = Receipt(
+          image: _image,
+          total: _receiptTotal,
+          comment: _comment,
+          expenseType: _expenseType);
       await dbRef
           .doc(Global.auth.currentUser?.uid)
           .collection("receipts")

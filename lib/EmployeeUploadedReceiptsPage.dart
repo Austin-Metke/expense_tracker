@@ -1,10 +1,8 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:expense_tracker/Global.dart';
 import 'package:flutter/material.dart';
-
-import 'Global.dart';
+import 'package:intl/intl.dart';
 
 class EmployeeUploadedReceiptsPage extends StatefulWidget {
   final String? phoneNumber;
@@ -23,73 +21,173 @@ class _EmployeeUploadedReceiptsPageState
     extends State<EmployeeUploadedReceiptsPage> {
   late String? _phoneNumber;
   late String? _name;
+  late Stream<QuerySnapshot> _receiptStream;
+  late bool isLoading;
 
   @override
   initState() {
+    isLoading = true;
     super.initState();
     _phoneNumber = widget.phoneNumber;
     _name = widget.name;
+    _receiptStream = _getReceiptStream();
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("$_name receipts"),
-          centerTitle: true,
-          backgroundColor: Global.colorBlue,
-        ),
-        body: StreamBuilder<List<Map<dynamic, dynamic>>>(
-            builder: (BuildContext context,
-                AsyncSnapshot<List<Map<dynamic, dynamic>>> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: Text("Loading"));
-              } else if (snapshot.connectionState == ConnectionState.active ||
-                  snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasError) {
-                  print(snapshot.error.toString());
-
-                  return const Center(
-                      child: Text("An unknown error has occurred"));
-                } else if (snapshot.hasData) {
-
-                  return ListView(
-
-                    children: [
-
-                    ]
-
-                  );
-
-                }
-              }
-              return Text("some error occcured, probably");
+      appBar: AppBar(
+        title: Text("$_name receipts"),
+        centerTitle: true,
+        backgroundColor: Global.colorBlue,
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (context) {
+              return [
+                PopupMenuItem<int>(
+                  value: 0,
+                  child: const Text("Sort by value"),
+                  onTap: () => _sortByValue(),
+                ),
+                PopupMenuItem<int>(
+                  value: 1,
+                  child: const Text("Sort by newest"),
+                  onTap: () => _sortByDateDescending(),
+                ),
+                PopupMenuItem<int>(
+                  value: 2,
+                  child: const Text("Sort by oldest"),
+                  onTap: () => _sortByDateAscending(),
+                ),
+              ];
             },
-            stream: Stream.fromFuture(getUserReceipts())));
+          )
+        ],
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _receiptStream,
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: Text("Loading"));
+          } else if (snapshot.connectionState == ConnectionState.active ||
+              snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return const Center(child: Text("An unknown error has occurred"));
+            } else if (snapshot.hasData) {
+              return _getDocumentListView(snapshot);
+            }
+          }
+          return _getDocumentListView(snapshot);
+        },
+      ),
+    );
   }
 
-  Future<List<Map<dynamic, dynamic>>> getUserReceipts() async {
-    HttpsCallable callable = FirebaseFunctions.instanceFor(region: "us-west2")
-        .httpsCallable('getUserReceipts');
+  Widget _getDocumentListView(AsyncSnapshot<QuerySnapshot> snapshot) {
+    return ListView(
+      children: snapshot.data!.docs.map((DocumentSnapshot document) {
+        Map<String, dynamic> receiptData =
+            document.data()! as Map<String, dynamic>;
+        var total = receiptData['total'] / 100;
+        var comment = receiptData['comment'];
+        var date = receiptData['date'];
+        var image = base64Decode(receiptData['image']);
 
-    final resp = await callable.call(<String, dynamic>{
-      'email': "$_phoneNumber@fakeemail.com",
-    });
+        return InkWell(
+          child: Container(
+              margin: const EdgeInsets.all(10),
+              color: const Color.fromARGB(100, 121, 121, 121),
+              child: Column(children: [
+                Image.memory(image),
 
-    final data = resp.data as List;
+                Text(
+                  "Total: ${NumberFormat.simpleCurrency().format(total)}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
 
-    List<Map<String, dynamic>> receiptList = [];
+                Text(
+                    "Comment: ${(comment != null || comment == "" ? comment : "none")}",
+                    style: const TextStyle(
+                      fontSize: 18,
+                    )),
 
-    for(var e in data) {
+                //Ternary operation to ensure build() doesn't break on the offchance an upload date isn't stored
+                Text(
+                    "Uploaded on: ${(date is int ? "${_getDateUploaded(date)} at ${_getTimeUploaded(date)}" : "Unkown")}")
+              ])),
+        );
+      }).toList(),
+    );
+  }
 
-      receiptList.add(jsonDecode(e.toString()));
-    }
+  _getDateUploaded(int time) {
+    return DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY)
+        .format(DateTime.fromMicrosecondsSinceEpoch(time));
+  }
 
-    return receiptList;
+  _getTimeUploaded(int time) {
+    return DateFormat(DateFormat.HOUR_MINUTE)
+        .format(DateTime.fromMicrosecondsSinceEpoch(time));
+  }
 
-/*    data.forEach((element) {
+  _sortByValue() async {
+    setState(() => _receiptStream = _getReceiptStreamByValue());
+  }
 
-      var test = element.toString().split("stringValue");
+  _sortByDateAscending() async {
+    setState(() => _receiptStream = _getReceiptStreamByDateAscending());
+  }
 
-    });*/
+  _sortByDateDescending() async {
+    setState(() => _receiptStream = _getReceiptStreamByDateDescending());
+  }
+
+  Stream<QuerySnapshot> _getReceiptStream() async* {
+    var userQuery = await FirebaseFirestore.instance
+        .collection("users")
+        .where(("phoneNumber"), isEqualTo: _phoneNumber)
+        .get();
+
+    yield* FirebaseFirestore.instance
+        .collection("users/${userQuery.docs.first.id}/receipts")
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> _getReceiptStreamByValue() async* {
+    var userQuery = await FirebaseFirestore.instance
+        .collection("users")
+        .where(("phoneNumber"), isEqualTo: _phoneNumber)
+        .get();
+
+    yield* FirebaseFirestore.instance
+        .collection("users/${userQuery.docs.first.id}/receipts")
+        .orderBy('total', descending: true)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> _getReceiptStreamByDateAscending() async* {
+    var userQuery = await FirebaseFirestore.instance
+        .collection("users")
+        .where(("phoneNumber"), isEqualTo: _phoneNumber)
+        .get();
+
+    yield* FirebaseFirestore.instance
+        .collection("users/${userQuery.docs.first.id}/receipts")
+        .orderBy('date', descending: true)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> _getReceiptStreamByDateDescending() async* {
+    var userQuery = await FirebaseFirestore.instance
+        .collection("users")
+        .where(("phoneNumber"), isEqualTo: _phoneNumber)
+        .get();
+
+    yield* FirebaseFirestore.instance
+        .collection("users/${userQuery.docs.first.id}/receipts")
+        .orderBy('date', descending: false)
+        .snapshots();
   }
 }

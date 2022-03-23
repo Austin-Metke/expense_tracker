@@ -1,4 +1,5 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:expense_tracker/NewUserPasswordChangePage.dart';
 import 'package:expense_tracker/UserFunctions.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -39,15 +40,19 @@ class _LoginPageState extends State<LoginPage> {
 
   _submitForm() async {
     final formState = _key.currentState;
-
-    print(_phoneNumber);
-
+    
     if (formState!.validate()) {
 
       var emailCredential = EmailAuthProvider.credential(
           email: _phoneNumber + "@fakeemail.com", password: _password);
       try {
-        await Global.auth.signInWithCredential(emailCredential);
+        var user = await Global.auth.signInWithCredential(emailCredential);
+
+        if(user.additionalUserInfo!.isNewUser) {
+          //TODO Create change password page for new users
+          _showChangePasswordPage();
+        }
+
         _showUserFunctionPage();
 
 
@@ -231,6 +236,12 @@ class _LoginPageState extends State<LoginPage> {
   _showUserFunctionPage() {
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => const UserFunctionsPage()));
+  }
+
+  _showChangePasswordPage() {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const NewUserPasswordChangePage()));
+
   }
 
 

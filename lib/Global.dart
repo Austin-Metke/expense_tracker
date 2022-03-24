@@ -35,17 +35,4 @@ abstract class Global {
   );
 
   static final FirebaseAuth auth = FirebaseAuth.instance;
-
-
-  static const bottomNavigationBarItems = [
-      BottomNavigationBarItem(icon: Icon(Icons.home),
-        label: "My receipts",
-      ),
-      BottomNavigationBarItem(icon: Icon(Icons.person),
-        label: "Manage users",
-      ),
-      BottomNavigationBarItem(icon: Icon(Icons.attach_money_outlined,),
-        label: "Expenses overview",
-      ),
-    ];
-  }
+}

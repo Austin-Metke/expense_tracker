@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:expense_tracker/EmployeeNavigationPage.dart';
 import 'package:expense_tracker/NewUserPasswordChangePage.dart';
-import 'package:expense_tracker/UserFunctions.dart';
+import 'package:expense_tracker/ManagerNavigationPage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -37,26 +38,21 @@ class _LoginPageState extends State<LoginPage> {
   late bool? _wrongPassword = false;
   late bool? _tooManyRequests = false;
 
-
   _submitForm() async {
     final formState = _key.currentState;
-    
-    if (formState!.validate()) {
 
+    if (formState!.validate()) {
       var emailCredential = EmailAuthProvider.credential(
           email: _phoneNumber + "@fakeemail.com", password: _password);
       try {
         var user = await Global.auth.signInWithCredential(emailCredential);
 
-        if(user.additionalUserInfo!.isNewUser) {
+        if (user.additionalUserInfo!.isNewUser) {
           //TODO Create change password page for new users
           _showChangePasswordPage();
         }
 
         _showUserFunctionPage();
-
-
-
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
           case 'user-not-found':
@@ -86,65 +82,63 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Center(
         child: Form(
-          key: _key,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                //Temporary Logo
+      key: _key,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            //Temporary Logo
 
-                const Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Image(
-                        image: AssetImage("assets/cvcenterprise.png")),
-                  ),
-                ),
-                //Phone number field
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                  child: phoneNumberField(),
-                ),
-
-                //Password Field
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: passwordField(),
-                ),
-
-                //Login Button
-                SizedBox(height: 40, width: 375, child: loginButton()),
-
-                Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: GestureDetector(
-                      child: const Text("Forgot password?",
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Global.colorBlue,
-                          )),
-                      onTap: () => _forgotPassword(),
-                    )),
-
-                Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-                    child: GestureDetector(
-                      child: const Text("¿Hablas Español?",
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Global.colorBlue,
-                          )),
-                      onTap: () => changeLang(),
-                    )),
-              ],
+            const Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: EdgeInsets.all(10),
+                child: Image(image: AssetImage("assets/cvcenterprise.png")),
+              ),
             ),
-          ),
-        ));
+            //Phone number field
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+              child: phoneNumberField(),
+            ),
+
+            //Password Field
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: passwordField(),
+            ),
+
+            //Login Button
+            SizedBox(height: 40, width: 375, child: loginButton()),
+
+            Padding(
+                padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                child: GestureDetector(
+                  child: const Text("Forgot password?",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Global.colorBlue,
+                      )),
+                  onTap: () => _forgotPassword(),
+                )),
+
+            Padding(
+                padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                child: GestureDetector(
+                  child: const Text("¿Hablas Español?",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Global.colorBlue,
+                      )),
+                  onTap: () => changeLang(),
+                )),
+          ],
+        ),
+      ),
+    ));
   }
 
 //**********************Phone Number Field*****************************
-  Widget phoneNumberField() =>
-      TextFormField(
+  Widget phoneNumberField() => TextFormField(
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(
@@ -153,40 +147,39 @@ class _LoginPageState extends State<LoginPage> {
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
         ),
-        validator: (value) => _phoneNumberValidator(toNumericString(value, allowPeriod: false, allowHyphen: false)),
-        onChanged: (value) => _phoneNumber = toNumericString(value, allowHyphen: false, allowPeriod: false),
+        validator: (value) => _phoneNumberValidator(
+            toNumericString(value, allowPeriod: false, allowHyphen: false)),
+        onChanged: (value) => _phoneNumber =
+            toNumericString(value, allowHyphen: false, allowPeriod: false),
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
         inputFormatters: [Global.phoneInputFormatter],
       );
 
 //**********************Password Field**************************
-  Widget passwordField() =>
-      TextFormField(
-          decoration: InputDecoration(
-            labelText: "Password",
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-            ),
-            prefixIcon: const Icon(Icons.lock),
-            hintText: "Password",
-            suffixIcon: GestureDetector(
-                child: _visPass
-                    ? const Icon(Icons.visibility_off)
-                    : const Icon(Icons.visibility),
-                onTap: () =>
-                    setState(() {
-                      _visPass = !_visPass;
-                    })),
-          ),
-          validator: (value) => _passwordValidator(value),
-          obscureText: !_visPass,
-          onChanged: (value) => _password = value,
-          onFieldSubmitted: (value) => _key.currentState?.validate());
+  Widget passwordField() => TextFormField(
+      decoration: InputDecoration(
+        labelText: "Password",
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+        prefixIcon: const Icon(Icons.lock),
+        hintText: "Password",
+        suffixIcon: GestureDetector(
+            child: _visPass
+                ? const Icon(Icons.visibility_off)
+                : const Icon(Icons.visibility),
+            onTap: () => setState(() {
+                  _visPass = !_visPass;
+                })),
+      ),
+      validator: (value) => _passwordValidator(value),
+      obscureText: !_visPass,
+      onChanged: (value) => _password = value,
+      onFieldSubmitted: (value) => _key.currentState?.validate());
 
 //**********************Login Button**************************
-  Widget loginButton() =>
-      TextButton(
+  Widget loginButton() => TextButton(
         style: Global.defaultButtonStyle,
         onPressed: () => _submitForm(),
         child: const Text("Login"),
@@ -219,8 +212,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _phoneNumberValidator(String? value) {
-    if (value!.isEmpty ||
-        value.length < Global.phoneNumberLength) {
+    if (value!.isEmpty || value.length < Global.phoneNumberLength) {
       return 'Please enter a valid phone number';
     }
 
@@ -233,16 +225,27 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  _showUserFunctionPage() {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) => const UserFunctionsPage()));
+  _showUserFunctionPage() async {
+    var isManager = await _isManager();
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => (isManager)
+                ? const ManagerNavigationPage()
+                : const EmployeeNavigationPage()));
   }
 
   _showChangePasswordPage() {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) => const NewUserPasswordChangePage()));
-
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => const NewUserPasswordChangePage()));
   }
+}
 
+Future<bool> _isManager() async {
+  var tokenResult = await Global.auth.currentUser?.getIdTokenResult(true);
 
+  return tokenResult?.claims!['isManager'] as bool;
 }

@@ -24,6 +24,7 @@ class EditReceiptPage extends StatefulWidget {
 class _EditReceiptPageState extends State<EditReceiptPage> {
   final _key = GlobalKey<FormState>();
 
+  String? _initialTotal;
   double? _total;
   String? _encodedImage;
   File? _image;
@@ -34,11 +35,11 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
   late final String? _receiptID;
   final dbRef = FirebaseFirestore.instance.collection('users');
 
-
   @override
   void initState() {
     super.initState();
-    _total = widget.receiptData['total'] / 100;
+    _initialTotal = (widget.receiptData['total'] / 100).toStringAsFixed(2);
+    _total = widget.receiptData['total'];
     _comment = widget.receiptData['comment'];
     _encodedImage = widget.receiptData['image'];
     _receiptID = widget.receiptID;
@@ -160,7 +161,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: TextFormField(
-                      initialValue: _total!.toStringAsFixed(2),
+                      initialValue: _initialTotal,
                       decoration: const InputDecoration(
                         labelText: "Receipt Total",
                         prefixText: "\$ ",
@@ -202,14 +203,10 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                   ),
                   //**********************************
 
-
-
                   //**********ExpenseTypeDrownDownMenu*********
                   DropdownButton<String>(
-
                       value: _expenseType,
                       items: const [
-
                         DropdownMenuItem<String>(
                           child: Text("Travel"),
                           value: ExpenseType.travel,
@@ -226,11 +223,10 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                           child: Text("Other"),
                           value: ExpenseType.other,
                         ),
-
-                      ], onChanged: (value) => setState(() => _expenseType = value!)),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _expenseType = value)),
                   //**********************************
-
-
 
                   //************UploadButton**********
                   Padding(
@@ -292,7 +288,11 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
 
     Receipt receipt = (_image == null)
         ? Receipt(total: _total, comment: _comment, expenseType: _expenseType)
-        : Receipt(total: _total, comment: _comment, image: _image, expenseType: _expenseType);
+        : Receipt(
+            total: _total,
+            comment: _comment,
+            image: _image,
+            expenseType: _expenseType);
 
     await FirebaseFirestore.instance
         .doc("users/${Global.auth.currentUser!.uid}/receipts/$_receiptID")
@@ -302,21 +302,23 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
   }
 
   Future<void> _updateCumulativeTotal() async {
+    double total = 0;
+
+
     final receiptCollectionReference =
         dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
-
-    double total = 0.0;
 
     final receiptQuerySnapshot = await receiptCollectionReference.get();
 
     for (var receiptDocument in receiptQuerySnapshot.docs) {
       var tempTotal = double.parse(receiptDocument.get('total').toString());
       total += tempTotal;
+
     }
 
-    dbRef.doc(Global.auth.currentUser?.uid).update(<String, dynamic>{
+    await dbRef.doc(Global.auth.currentUser?.uid).update(<String, dynamic>{
       'total': double.parse(total.toStringAsFixed(2)),
-      'uploadedReceipts': receiptQuerySnapshot.docs.length
+      'uploadedReceipts': receiptQuerySnapshot.docs.length,
     });
   }
 

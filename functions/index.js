@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const {user} = require("firebase-functions/v1/auth");
 admin.initializeApp();
 
 const auth = admin.auth();
@@ -116,6 +117,50 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
     }
 });
 
+exports.getMyExpenses = functions.region('us-west2').https.onCall(async (data, context) => {
+
+    let receiptQuery = await firestore.collection("users/" + context.auth.uid + "/receipts").get();
+
+    let foodTotal = 0;
+    let toolsTotal = 0;
+    let travelTotal = 0;
+    let otherTotal = 0;
+    let toolsExpensesMade = 0;
+    let foodExpensesMade = 0;
+    let travelExpensesMade = 0;
+    let otherExpensesMade = 0;
+
+    let receiptDocs = receiptQuery.docs;
+
+    for(let i = 0; i < receiptDocs.length; i++) {
+
+        const receiptDocReference = receiptDocs[i];
+
+        switch(receiptDocReference.get('expenseType')) {
+            case "Food":
+                foodTotal += receiptDocReference.get('total');
+                foodExpensesMade++;
+                break;
+            case "Tools":
+                toolsTotal += receiptDocReference.get('total');
+                toolsExpensesMade++;
+                break;
+            case "Travel":
+                travelTotal += receiptDocReference.get('total');
+                travelExpensesMade++;
+                break;
+            case "Other":
+                otherTotal += receiptDocReference.get('total');
+                otherExpensesMade++;
+        }
+
+    }
+
+    return [foodTotal/100, toolsTotal/100, travelTotal/100, otherTotal/100,  foodExpensesMade, toolsExpensesMade, travelExpensesMade, otherExpensesMade];
+
+});
+
+
 exports.getExpenses = functions.region('us-west2').https.onCall(async (data, context) => {
 
     let user = await auth.getUser(context.auth.uid);
@@ -181,5 +226,6 @@ exports.getExpenses = functions.region('us-west2').https.onCall(async (data, con
         }
         return [foodTotal/100, toolsTotal/100, travelTotal/100, otherTotal/100, cumulativeTotal/100, foodExpensesMade, toolsExpensesMade, travelExpensesMade, otherExpensesMade, totalExpensesMade];
     }
+
 });
 

@@ -181,8 +181,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                   //**********ExpenseTypeDrownDownMenu*********
 
                   DropdownButton<String>(
-                    value: _expenseType,
-
+                      value: _expenseType,
                       hint: const Text("Expense Type"),
                       items: const [
                         DropdownMenuItem<String>(
@@ -283,23 +282,23 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     await _updateCumulativeTotal();
   }
 
-  //Updates the users document in Firestore with the cumulative total of all receipts
+  //Updates the users document in Firestore with the cumulative total of all receipts alongside the total for each expense type
   Future<void> _updateCumulativeTotal() async {
+    double total = 0;
+
     final receiptCollectionReference =
         dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
 
-    double total = 0.0;
-
     final receiptQuerySnapshot = await receiptCollectionReference.get();
-
     for (var receiptDocument in receiptQuerySnapshot.docs) {
       var tempTotal = double.parse(receiptDocument.get('total').toString());
       total += tempTotal;
+
     }
 
     await dbRef.doc(Global.auth.currentUser?.uid).update(<String, dynamic>{
       'total': double.parse(total.toStringAsFixed(2)),
-      'uploadedReceipts': receiptQuerySnapshot.docs.length
+      'uploadedReceipts': receiptQuerySnapshot.docs.length,
     });
   }
 

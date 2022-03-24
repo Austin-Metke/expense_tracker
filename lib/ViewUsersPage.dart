@@ -18,7 +18,7 @@ class ViewUserPage extends StatefulWidget {
 class _ViewUserPageState extends State<ViewUserPage> {
   var _userStream = FirebaseFirestore.instance.collection('users').snapshots();
   late int? selected;
-
+  late String? userDocumentID;
   late TapDownDetails _tapDownDetails;
 
   @override
@@ -37,6 +37,7 @@ class _ViewUserPageState extends State<ViewUserPage> {
           style: Global.defaultButtonStyle,
         ),
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: Global.colorBlue,
           centerTitle: true,
           title: const Text("All Employees"),
@@ -78,8 +79,7 @@ class _ViewUserPageState extends State<ViewUserPage> {
             }
 
             return RefreshIndicator(
-                onRefresh: _onRefresh,
-                child: _getUserListView(snapshot));
+                onRefresh: _onRefresh, child: _getUserListView(snapshot));
           },
         ));
   }
@@ -90,44 +90,48 @@ class _ViewUserPageState extends State<ViewUserPage> {
         Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
         return Column(children: [
           InkWell(
-              onLongPress: () async => {
-                    selected = (await showMenu<int>(
-                        context: context,
-                        position: RelativeRect.fromLTRB(
-                            0,
-                            _tapDownDetails.globalPosition.dy,
-                            _tapDownDetails.globalPosition.dx,
-                            0),
-                        items: [
-                          PopupMenuItem<int>(
-                            value: 0,
-                            child: FittedBox(
-                                child: Row(
-                              children: const [
-                                Icon(Icons.edit),
-                                Global.defaultIconSpacing,
-                                Text("Edit user")
-                              ],
-                            )),
-                          ),
-                          PopupMenuItem<int>(
-                            value: 1,
-                            child: FittedBox(
-                                child: Row(
-                              children: const [
-                                Icon(Icons.person_remove_outlined),
-                                Global.defaultIconSpacing,
-                                Text("Delete user"),
-                              ],
-                            )),
-                          ),
-                        ])),
-                    if (selected == 0)
-                      {_showEditUserPage(data)}
-                    else if (selected == 1)
-                      {_deleteUser(data['email'], data['name'])}
-                  },
-              onTap: () => _viewUserDetailsPage(userData: data),
+              onLongPress: () async {
+                selected = (await showMenu<int>(
+                    context: context,
+                    position: RelativeRect.fromLTRB(
+                        0,
+                        _tapDownDetails.globalPosition.dy,
+                        _tapDownDetails.globalPosition.dx,
+                        0),
+                    items: [
+                      PopupMenuItem<int>(
+                        value: 0,
+                        child: FittedBox(
+                            child: Row(
+                          children: const [
+                            Icon(Icons.edit),
+                            Global.defaultIconSpacing,
+                            Text("Edit user")
+                          ],
+                        )),
+                      ),
+                      PopupMenuItem<int>(
+                        value: 1,
+                        child: FittedBox(
+                            child: Row(
+                          children: const [
+                            Icon(Icons.person_remove_outlined),
+                            Global.defaultIconSpacing,
+                            Text("Delete user"),
+                          ],
+                        )),
+                      ),
+                    ]));
+                if (selected == 0) {
+                  _showEditUserPage(data);
+                } else if (selected == 1) {
+                  _deleteUser(data['email'], data['name']);
+                }
+              },
+              onTap: () {
+                userDocumentID = document.id;
+                _viewUserDetailsPage(userData: data);
+              },
               onTapDown: (tapDownDetails) => _tapDownDetails = tapDownDetails,
               child: Container(
                 margin: const EdgeInsets.all(10),
@@ -229,7 +233,10 @@ class _ViewUserPageState extends State<ViewUserPage> {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => UserDetailsPage(userData: userData)));
+            builder: (context) => UserDetailsPage(
+                  userData: userData,
+                  userDocumentID: userDocumentID,
+                )));
   }
 
   _getStream() {

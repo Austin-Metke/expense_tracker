@@ -53,6 +53,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
     return OKToast(
         child: Scaffold(
             appBar: AppBar(
+              automaticallyImplyLeading: false,
               backgroundColor: Global.colorBlue,
               centerTitle: true,
               title: const Text("Uploaded Receipts"),

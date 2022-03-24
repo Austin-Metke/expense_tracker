@@ -9,8 +9,9 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 
 class UserDetailsPage extends StatefulWidget {
   final Map<String, dynamic> userData;
+  final String? userDocumentID;
 
-  const UserDetailsPage({Key? key, required this.userData}) : super(key: key);
+  const UserDetailsPage({Key? key, required this.userData,required this.userDocumentID}) : super(key: key);
 
   @override
   _UserDetailsPageState createState() => _UserDetailsPageState();
@@ -21,10 +22,12 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
   late double? _total;
   late int? _receiptsUploaded;
   late String? _phoneNumber;
+  late String? _userDocumentID;
 
   @override
   void initState() {
     super.initState();
+    _userDocumentID = widget.userDocumentID;
     _name = widget.userData['name'];
     _total = (widget.userData['total'] == null || widget.userData['total'] == 0)
         ? 0
@@ -33,10 +36,10 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
     _phoneNumber = widget.userData['phoneNumber'];
   }
 
+
   @override
   Widget build(BuildContext context) {
-    return OKToast(
-        child: Scaffold(
+    return Scaffold(
             appBar: AppBar(
               centerTitle: true,
               title: Text("Details for $_name"),
@@ -179,7 +182,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                   ),
                 ],
               ),
-            )));
+            ));
   }
 
   void _viewUserReceiptsPage(
@@ -194,14 +197,9 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   Future<List<ChartData>> _getUserDataByTotal() async {
-    var userQuery = await FirebaseFirestore.instance
-        .collection('users')
-        .where('phoneNumber', isEqualTo: _phoneNumber)
-        .limit(1)
-        .get();
 
     var receiptSnapshot = await FirebaseFirestore.instance
-        .collection('users/${userQuery.docs.first.id}/receipts')
+        .collection('users/$_userDocumentID/receipts')
         .get();
 
     double tools = 0;
@@ -235,14 +233,9 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   Future<List<ChartData>> _getUserDataByReceiptsUploaded() async {
-    var userSnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .where('phoneNumber', isEqualTo: _phoneNumber)
-        .limit(1)
-        .get();
 
     var receiptSnapshot = await FirebaseFirestore.instance
-        .collection('users/${userSnapshot.docs.first.id}/receipts')
+        .collection('users/$_userDocumentID/receipts')
         .get();
 
     int tools = 0;

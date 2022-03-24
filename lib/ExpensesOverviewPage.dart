@@ -18,6 +18,7 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text("Weekly Expenses"),
           backgroundColor: Global.colorBlue,
           centerTitle: true,
@@ -41,8 +42,9 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
   }
 
   Widget _getExpensesListView(AsyncSnapshot<List<num>> snapshot) {
-    final foodExpenses =
-        double.parse(snapshot.data!.elementAt(0).toDouble().toStringAsFixed(2));
+
+    final foodExpenses = double.parse(snapshot.data!.elementAt(0).toDouble().toStringAsFixed(2));
+
     final toolsExpenses = snapshot.data!.elementAt(1).toDouble();
     final travelExpenses = snapshot.data!.elementAt(2).toDouble();
     final otherExpenses = snapshot.data!.elementAt(3).toDouble();

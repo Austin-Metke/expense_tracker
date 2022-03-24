@@ -61,7 +61,7 @@ class _EmployeeUploadedReceiptsPageState
                 ),
               ];
             },
-          )
+          ),
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(

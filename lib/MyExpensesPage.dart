@@ -30,7 +30,7 @@ class _MyExpensesPageState extends State<MyExpensesPage> {
           if (snapshot.connectionState == ConnectionState.none) {
             return Container();
           } else if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Text("Loading...");
+            return const Center(child: Text("Loading..."));
           } else if (snapshot.hasError) {
             print(snapshot.error);
             return const Text("An unknown error occurred!");

@@ -153,12 +153,36 @@ exports.getMyExpenses = functions.region('us-west2').https.onCall(async (data, c
                 otherTotal += receiptDocReference.get('total');
                 otherExpensesMade++;
         }
-
     }
 
     return [foodTotal/100, toolsTotal/100, travelTotal/100, otherTotal/100,  foodExpensesMade, toolsExpensesMade, travelExpensesMade, otherExpensesMade];
+});
+
+
+exports.archive = functions.pubsub.schedule('0 0 * * 6').onRun(async(context) => {
+
+    const usersQuerySnapshot = await firestore.collection('users').get();
+
+    for(let i = 0; i < usersQuerySnapshot.size; i++) {
+
+        const usersDocReference = await usersQuerySnapshot.docs[i].ref;
+
+        const receiptColReference = await firestore.collection('users/' + usersDocReference.id + '/receipts');
+
+        const receiptSnapshot = await receiptColReference.get();
+
+        for(let j = 0; j < receiptSnapshot.size; j++) {
+            const receiptDocReference = receiptSnapshot.docs[j];
+
+            await firestore.collection('archivedReceipts').doc(usersDocReference.id).collection('receipts').doc(receiptDocReference.id).set(receiptDocReference.data());
+
+        }
+
+
+    }
 
 });
+
 
 
 exports.getExpenses = functions.region('us-west2').https.onCall(async (data, context) => {

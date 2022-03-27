@@ -27,6 +27,7 @@ class Receipt {
       return <String, dynamic>{
         'total': receipt.total,
         'comment': receipt.comment,
+        'expenseType': receipt.expenseType,
       };
     } else {
       final _imageAsBytes =

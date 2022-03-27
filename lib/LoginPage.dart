@@ -29,7 +29,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _key = GlobalKey<FormState>();
+  final GlobalKey<FormState> _key = GlobalKey<FormState>();
 
   late String _phoneNumber;
   late String _password;
@@ -87,7 +87,6 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           children: [
             //Temporary Logo
-
             const Align(
               alignment: Alignment.topCenter,
               child: Padding(

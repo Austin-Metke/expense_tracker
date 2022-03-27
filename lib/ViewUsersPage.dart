@@ -88,6 +88,9 @@ class _ViewUserPageState extends State<ViewUserPage> {
     return ListView(
       children: snapshot.data!.docs.map((DocumentSnapshot document) {
         Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
+        var name = data['name'];
+        var email = data['email'];
+        var isManager = (data['isManager']) ? "Manager" : "Employee";
         return Column(children: [
           InkWell(
               onLongPress: () async {
@@ -125,7 +128,7 @@ class _ViewUserPageState extends State<ViewUserPage> {
                 if (selected == 0) {
                   _showEditUserPage(data);
                 } else if (selected == 1) {
-                  _deleteUser(data['email'], data['name']);
+                  _deleteUser(email, name);
                 }
               },
               onTap: () {
@@ -138,11 +141,8 @@ class _ViewUserPageState extends State<ViewUserPage> {
                 color: Colors.white10,
                 child: Row(children: <Widget>[
                   const Icon(Icons.person_outline),
-                  data['name'] != Global.auth.currentUser!.displayName
-                      ? Text(
-                          "User: ${data['name']}, Manager: ${data['isManager']}")
-                      : Text(
-                          "User: ${data['name']} (you), Manager: ${data['isManager']}"),
+
+                  Text((Global.auth.currentUser!.uid == document.id) ? "(you) $name, $isManager" : "name: $name, $isManager"),
                 ]),
               )),
         ]);

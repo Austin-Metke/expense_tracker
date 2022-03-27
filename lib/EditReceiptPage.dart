@@ -208,24 +208,23 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                       value: _expenseType,
                       items: const [
                         DropdownMenuItem<String>(
-                          child: Text("Travel"),
+                          child: Text(ExpenseType.travel),
                           value: ExpenseType.travel,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text("Food"),
+                          child: Text(ExpenseType.food),
                           value: ExpenseType.food,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text("Tools"),
+                          child: Text(ExpenseType.tools),
                           value: ExpenseType.tools,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text("Other"),
+                          child: Text(ExpenseType.other),
                           value: ExpenseType.other,
                         ),
                       ],
-                      onChanged: (value) =>
-                          setState(() => _expenseType = value)),
+                      onChanged: (value) => setState(() => _expenseType = value)),
                   //**********************************
 
                   //************UploadButton**********
@@ -304,7 +303,6 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
   Future<void> _updateCumulativeTotal() async {
     double total = 0;
 
-
     final receiptCollectionReference =
         dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
 
@@ -313,7 +311,6 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
     for (var receiptDocument in receiptQuerySnapshot.docs) {
       var tempTotal = double.parse(receiptDocument.get('total').toString());
       total += tempTotal;
-
     }
 
     await dbRef.doc(Global.auth.currentUser?.uid).update(<String, dynamic>{

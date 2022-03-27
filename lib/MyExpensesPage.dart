@@ -49,7 +49,7 @@ class _MyExpensesPageState extends State<MyExpensesPage> {
     var columnChartData = snapshot.data!['columnChartData'];
     var pieChartData = snapshot.data!['pieChartData'];
     double total = snapshot.data!['total'];
-    var receiptsUploaded = snapshot.data!['receiptsUploaded'];
+    int receiptsUploaded = snapshot.data!['receiptsUploaded'].toInt();
 
     return ListView(
       children: [
@@ -121,45 +121,38 @@ class _MyExpensesPageState extends State<MyExpensesPage> {
   }
 
   Future<Map<String, dynamic>> _getChartData() async {
-    final userDoc = await FirebaseFirestore.instance
-        .doc("users/${Global.auth.currentUser!.uid}")
-        .get();
 
-    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
-        .httpsCallable('getMyExpenses');
+    final expenses = await FirebaseFirestore.instance.collection('stats').doc(Global.auth.currentUser!.uid).get();
 
-    final resp = await callable();
+    final double foodTotal = expenses.get('foodTotal').toDouble()/100;
+    final double toolsTotal = expenses.get('toolsTotal').toDouble()/100;
+    final double travelTotal = expenses.get('travelTotal').toDouble()/100;
+    final double otherTotal = expenses.get('otherTotal').toDouble() /100;
+    final double cumulativeTotal = expenses.get('receiptTotal').toDouble() /100;
 
-    final expenses = resp.data as List<dynamic>;
-
-    final foodExpenses = expenses.elementAt(0).toDouble();
-    final toolsExpenses = expenses.elementAt(1).toDouble();
-    final travelExpenses = expenses.elementAt(2).toDouble();
-    final otherExpenses = expenses.elementAt(3).toDouble();
-    final totalExpenses = userDoc.get("total").toDouble() / 100;
-    final foodExpensesMade = expenses.elementAt(4).toDouble();
-    final toolsExpensesMade = expenses.elementAt(5).toDouble();
-    final travelExpensesMade = expenses.elementAt(6).toDouble();
-    final otherExpensesMade = expenses.elementAt(7).toDouble();
-    final totalExpensesMade = userDoc.get("uploadedReceipts");
+    final double foodCount = expenses.get('foodCount').toDouble();
+    final double toolsCount = expenses.get('toolsCount').toDouble();
+    final double travelCount = expenses.get('travelCount').toDouble();
+    final double otherCount = expenses.get('otherCount').toDouble();
+    final double receiptCount = expenses.get('receiptCount').toDouble();
 
     var pieChartData = <ChartData>[
-      ChartData(ExpenseType.food, foodExpenses, Colors.green),
-      ChartData(ExpenseType.tools, toolsExpenses, Colors.purple),
-      ChartData(ExpenseType.travel, travelExpenses, Colors.blue),
-      ChartData(ExpenseType.other, otherExpenses, Colors.red),
+      ChartData(ExpenseType.food, foodTotal, Colors.green),
+      ChartData(ExpenseType.tools, toolsTotal, Colors.purple),
+      ChartData(ExpenseType.travel, travelTotal, Colors.blue),
+      ChartData(ExpenseType.other, otherTotal, Colors.red),
     ];
 
     var columnChartData = <ChartData>[
-      ChartData(ExpenseType.food, foodExpensesMade, Colors.green),
-      ChartData(ExpenseType.tools, toolsExpensesMade, Colors.purple),
-      ChartData(ExpenseType.travel, travelExpensesMade, Colors.blue),
-      ChartData(ExpenseType.other, otherExpensesMade, Colors.red),
+      ChartData(ExpenseType.food, foodCount, Colors.green),
+      ChartData(ExpenseType.tools, toolsCount, Colors.purple),
+      ChartData(ExpenseType.travel, travelCount, Colors.blue),
+      ChartData(ExpenseType.other, otherCount, Colors.red),
     ];
 
     return <String, dynamic>{
-      'total': totalExpenses,
-      "receiptsUploaded": totalExpensesMade,
+      'total': cumulativeTotal,
+      "receiptsUploaded": receiptCount,
       "pieChartData": pieChartData,
       "columnChartData": columnChartData,
     };

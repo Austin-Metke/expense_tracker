@@ -93,6 +93,5 @@ class _SettingsPageState extends State<SettingsPage> {
   _switchLanguage(int? value) {
 
 
-
   }
 }

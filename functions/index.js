@@ -1,10 +1,10 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const {user} = require("firebase-functions/v1/auth");
 admin.initializeApp();
 
 const auth = admin.auth();
 const firestore = admin.firestore();
+const increment = admin.firestore.FieldValue.increment;
 
 exports.makeUser = functions.region('us-west2').https.onCall(async (data, context) => {
 
@@ -82,7 +82,6 @@ exports.deleteUser = functions.region('us-west2').https.onCall(async (data, cont
 exports.updateUser = functions.region('us-west2').https.onCall(async (data, context) => {
 
     let user = await auth.getUser(context.auth.uid);
-
     if(user.customClaims.isManager) {
 
         try {
@@ -158,9 +157,272 @@ exports.getMyExpenses = functions.region('us-west2').https.onCall(async (data, c
     return [foodTotal/100, toolsTotal/100, travelTotal/100, otherTotal/100,  foodExpensesMade, toolsExpensesMade, travelExpensesMade, otherExpensesMade];
 });
 
+exports.setReceiptCounts = functions.region('us-west2').firestore.document('users/{userID}/receipts/{receiptID}').onWrite(async (change, context) => {
+
+    const userID = context.params.userID;
+    const statsRef = firestore.collection('stats').doc(userID);
+
+ if(!change.before.exists) {
+        //On create
+        let expenseType = change.after.get('expenseType');
+        let total = change.after.get('total');
+
+        switch(expenseType) {
+            case 'Food':
+                await statsRef.update({
+                    receiptCount: increment(1),
+                    receiptTotal: increment(total),
+                    foodCount: increment(1),
+                    foodTotal: increment(total),
+                });
+                break;
+            case 'Travel':
+                await statsRef.update({
+                    receiptCount: increment(1),
+                    receiptTotal: increment(total),
+                    travelCount: increment(1),
+                    travelTotal: increment(total),
+                });
+                break;
+            case 'Tools':
+                await statsRef.update({
+                    receiptCount: increment(1),
+                    receiptTotal: increment(total),
+                    toolsCount: increment(1),
+                    toolsTotal: increment(total),
+                });
+                break;
+            case 'Other':
+                await statsRef.update({
+                    receiptCount: increment(1),
+                    receiptTotal: increment(total),
+                    otherCount: increment(1),
+                    otherTotal: increment(total),
+                });
+
+        }
+    } else if(change.before.exists && change.after.exists) {
+        //On update
+        let beforeExpenseType = change.before.get('expenseType');
+        let afterExpenseType = change.after.get('expenseType');
+        let beforeTotal = change.before.get('total');
+        let afterTotal = change.after.get('total');
+
+     if(beforeExpenseType !== afterExpenseType && beforeTotal !== afterTotal) {
+
+         switch(beforeExpenseType) {
+             case 'Food':
+                 await statsRef.update({
+                     foodCount: increment(-1),
+                     foodTotal: increment(-beforeTotal),
+                     receiptTotal: increment(-beforeTotal),
+                 });
+                 break;
+             case 'Travel':
+                 await statsRef.update({
+                     travelCount: increment(-1),
+                     travelTotal: increment(-beforeTotal),
+                     receiptTotal: increment(-beforeTotal),
+                 });
+                 break;
+             case 'Tools':
+                 await statsRef.update({
+                     toolsCount: increment(-1),
+                     toolsTotal: increment(-beforeTotal),
+                     receiptTotal: increment(-beforeTotal),
+                 });
+                 break;
+             case 'Other':
+                 await statsRef.update({
+                     otherCount: increment(-1),
+                     otherTotal: increment(-beforeTotal),
+                     receiptTotal: increment(-beforeTotal),
+                 });
+         }
+
+         switch(afterExpenseType) {
+             case 'Food':
+                 await statsRef.update({
+                     foodCount: increment(1),
+                     foodTotal: increment(afterTotal),
+                     receiptTotal: increment(afterTotal),
+                 });
+                 break;
+             case 'Travel':
+                 await statsRef.update({
+                     travelCount: increment(1),
+                     travelTotal: increment(afterTotal),
+                     receiptTotal: increment(afterTotal),
+                 });
+                 break;
+             case 'Tools':
+                 await statsRef.update({
+                     toolsCount: increment(1),
+                     toolsTotal: increment(afterTotal),
+                     receiptTotal: increment(afterTotal),
+                 });
+                 break;
+             case 'Other':
+                 await statsRef.update({
+                     otherCount: increment(1),
+                     otherTotal: increment(afterTotal),
+                     receiptTotal: increment(afterTotal),
+                 });
+         }
+
+
+     } else if(beforeExpenseType !== afterExpenseType) {
+            switch(beforeExpenseType) {
+                case 'Food':
+                    await statsRef.update({
+                        foodCount: increment(-1),
+                        foodTotal: increment(-beforeTotal)
+                    });
+                    break;
+                case 'Travel':
+                    await statsRef.update({
+                        travelCount: increment(-1),
+                        travelTotal: increment(-beforeTotal)
+                    });
+                    break;
+                case 'Tools':
+                    await statsRef.update({
+                        toolsCount: increment(-1),
+                        toolsTotal: increment(-beforeTotal)
+                    });
+                    break;
+                case 'Other':
+                    await statsRef.update({
+                        otherCount: increment(-1),
+                        otherTotal: increment(-beforeTotal)
+                    });
+            }
+
+            switch(afterExpenseType) {
+                case 'Food':
+                    await statsRef.update({
+                        foodCount: increment(1),
+                        foodTotal: increment(beforeTotal)
+                    });
+                    break;
+                case 'Travel':
+                    await statsRef.update({
+                        travelCount: increment(1),
+                        travelTotal: increment(beforeTotal)
+                    });
+                    break;
+                case 'Tools':
+                    await statsRef.update({
+                        toolsCount: increment(1),
+                        toolsTotal: increment(beforeTotal)
+                    });
+                    break;
+                case 'Other':
+                    await statsRef.update({
+                        otherCount: increment(1),
+                        otherTotal: increment(beforeTotal)
+                    });
+            }
+        } else if(beforeTotal !== afterTotal) {
+            switch(beforeExpenseType) {
+                case 'Food':
+                    await statsRef.update({
+                        receiptTotal: increment(-beforeTotal),
+                        foodTotal: increment(-beforeTotal)
+                    });
+                    break;
+                case 'Travel':
+                    await statsRef.update({
+                        receiptTotal: increment(-beforeTotal),
+                        travelTotal: increment(-beforeTotal),
+                    });
+                    break;
+                case 'Tools':
+                    await statsRef.update({
+                        receiptTotal: increment(-beforeTotal),
+                        toolsTotal: increment(-beforeTotal),
+                    });
+                    break;
+                case 'Other':
+                    await statsRef.update({
+                        receiptTotal: increment(-beforeTotal),
+                        otherTotal: increment(-beforeTotal),
+                    });
+            }
+
+            switch(afterExpenseType) {
+                case 'Food':
+                    await statsRef.update({
+                        receiptTotal: increment(afterTotal),
+                        foodTotal: increment(afterTotal)
+                    });
+                    break;
+                case 'Travel':
+                    await statsRef.update({
+                        receiptTotal: increment(afterTotal),
+                        travelTotal: increment(afterTotal),
+                    });
+                    break;
+                case 'Tools':
+                    await statsRef.update({
+                        receiptTotal: increment(afterTotal),
+                        toolsTotal: increment(afterTotal),
+                    });
+                    break;
+                case 'Other':
+                    await statsRef.update({
+                        receiptTotal: increment(afterTotal),
+                        otherTotal: increment(afterTotal),
+                    });
+            }
+
+        }
+    }
+    else if(!change.after.exists) {
+        //On delete
+        let expenseType = change.before.get('expenseType');
+        let total = change.before.get('total');
+
+        switch(expenseType) {
+            case 'Food':
+                await statsRef.update({
+                    receiptCount: increment(-1),
+                    receiptTotal: increment(-total),
+                    foodCount: increment(-1),
+                    foodTotal: increment(-total),
+                });
+                break;
+            case 'Travel':
+                await statsRef.update({
+                    receiptCount: increment(-1),
+                    receiptTotal: increment(-total),
+                    travelCount: increment(-1),
+                    travelTotal: increment(-total),
+                });
+                break;
+            case 'Tools':
+                await statsRef.update({
+                    receiptCount: increment(-1),
+                    receiptTotal: increment(-total),
+                    toolsCount: increment(-1),
+                    toolsTotal: increment(-total),
+                });
+                break;
+            case 'Other':
+                await statsRef.update({
+                    receiptCount: increment(-1),
+                    receiptTotal: increment(-total),
+                    otherCount: increment(-1),
+                    otherTotal: increment(-total),
+                });
+        }
+    }
+});
+
 
 exports.archive = functions.pubsub.schedule('0 0 * * 6').onRun(async(context) => {
 
+    //TODO Make this not bad
     const usersQuerySnapshot = await firestore.collection('users').get();
 
     for(let i = 0; i < usersQuerySnapshot.size; i++) {

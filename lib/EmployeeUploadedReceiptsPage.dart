@@ -115,7 +115,7 @@ class _EmployeeUploadedReceiptsPageState
 
                 //Ternary operation to ensure build() doesn't break on the offchance an upload date isn't stored
                 Text(
-                    "Uploaded on: ${(date is int ? "${_getDateUploaded(date)} at ${_getTimeUploaded(date)}" : "Unkown")}")
+                    "Uploaded on: ${(date is int ? "${_getDateUploaded(date)} at ${_getTimeUploaded(date)}" : "Unknown")}")
               ])),
         );
       }).toList(),

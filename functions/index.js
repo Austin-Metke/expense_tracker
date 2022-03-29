@@ -26,11 +26,27 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
                 isManager: data.isManager,
             });
 
+            //Creates a user document
             await firestore.doc('users/' + newUser.uid).create({
                 email: data.email,
                 isManager: data.isManager,
                 name: data.name,
                 phoneNumber: data.phoneNumber,
+            });
+
+            //Creates a stats document for the user
+            await firestore.doc('stats/' + newUser.uid).create({
+                foodCount: 0,
+                foodTotal: 0,
+                otherCount: 0,
+                otherTotal: 0,
+                receiptCount: 0,
+                receiptTotal: 0,
+                toolsCount: 0,
+                toolsTotal: 0,
+                travelCount: 0,
+                travelTotal: 0,
+
             });
 
             return 'success';
@@ -116,46 +132,6 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
     }
 });
 
-exports.getMyExpenses = functions.region('us-west2').https.onCall(async (data, context) => {
-
-    let receiptQuery = await firestore.collection("users/" + context.auth.uid + "/receipts").get();
-
-    let foodTotal = 0;
-    let toolsTotal = 0;
-    let travelTotal = 0;
-    let otherTotal = 0;
-    let toolsExpensesMade = 0;
-    let foodExpensesMade = 0;
-    let travelExpensesMade = 0;
-    let otherExpensesMade = 0;
-
-    let receiptDocs = receiptQuery.docs;
-
-    for(let i = 0; i < receiptDocs.length; i++) {
-
-        const receiptDocReference = receiptDocs[i];
-
-        switch(receiptDocReference.get('expenseType')) {
-            case "Food":
-                foodTotal += receiptDocReference.get('total');
-                foodExpensesMade++;
-                break;
-            case "Tools":
-                toolsTotal += receiptDocReference.get('total');
-                toolsExpensesMade++;
-                break;
-            case "Travel":
-                travelTotal += receiptDocReference.get('total');
-                travelExpensesMade++;
-                break;
-            case "Other":
-                otherTotal += receiptDocReference.get('total');
-                otherExpensesMade++;
-        }
-    }
-
-    return [foodTotal/100, toolsTotal/100, travelTotal/100, otherTotal/100,  foodExpensesMade, toolsExpensesMade, travelExpensesMade, otherExpensesMade];
-});
 
 exports.setReceiptCounts = functions.region('us-west2').firestore.document('users/{userID}/receipts/{receiptID}').onWrite(async (change, context) => {
 
@@ -421,12 +397,12 @@ exports.setReceiptCounts = functions.region('us-west2').firestore.document('user
 
 
 exports.archive = functions.pubsub.schedule('0 0 * * 6').onRun(async(context) => {
-
     //TODO Make this not bad
+
+    const batch = firestore.batch();
     const usersQuerySnapshot = await firestore.collection('users').get();
 
     for(let i = 0; i < usersQuerySnapshot.size; i++) {
-
         const usersDocReference = await usersQuerySnapshot.docs[i].ref;
 
         const receiptColReference = await firestore.collection('users/' + usersDocReference.id + '/receipts');
@@ -435,83 +411,20 @@ exports.archive = functions.pubsub.schedule('0 0 * * 6').onRun(async(context) =>
 
         for(let j = 0; j < receiptSnapshot.size; j++) {
             const receiptDocReference = receiptSnapshot.docs[j];
-
             await firestore.collection('archivedReceipts').doc(usersDocReference.id).collection('receipts').doc(receiptDocReference.id).set(receiptDocReference.data());
-
+            batch.delete(receiptSnapshot.docs[j].ref);
         }
-
-
     }
-
+    //Delete all receipts after they've been archived
+    await batch.commit();
 });
 
 
 
-exports.getExpenses = functions.region('us-west2').https.onCall(async (data, context) => {
+exports.setExpenses = functions.region('us-west2').firestore.document('stats/{userID}').onWrite(async (change, context ) => {
 
-    let user = await auth.getUser(context.auth.uid);
-
-    if(user.customClaims.isManager) {
-
-        const usersQuerySnapshot = await firestore.collection('users').get();
-
-        let toolsTotal = 0;
-        let travelTotal = 0;
-        let foodTotal = 0;
-        let otherTotal = 0;
-
-
-        let cumulativeTotal = 0;
-        let perUserTotal = 0;
-
-
-        let toolsExpensesMade = 0;
-        let travelExpensesMade = 0;
-        let foodExpensesMade = 0;
-        let otherExpensesMade = 0;
-        let totalExpensesMade = 0;
-        for(let i = 0; i < usersQuerySnapshot.size; i++) {
-
-            const usersDocReference = await usersQuerySnapshot.docs[i].ref;
-
-            const receiptColReference = await firestore.collection('users/' + usersDocReference.id + '/receipts');
-
-            const receiptSnapshot = await receiptColReference.get();
-
-            for(let j = 0; j < receiptSnapshot.size; j++) {
-                const receiptDocReference = receiptSnapshot.docs[j];
-                perUserTotal += receiptDocReference.get('total');
-
-                switch(receiptDocReference.get('expenseType')) {
-                    case "Food":
-                        foodTotal += receiptDocReference.get('total');
-                        foodExpensesMade++;
-                        totalExpensesMade++;
-                        break;
-                    case "Tools":
-                        toolsTotal += receiptDocReference.get('total');
-                        totalExpensesMade++;
-                        toolsExpensesMade++;
-                        break;
-                    case "Travel":
-                        travelTotal += receiptDocReference.get('total');
-                        totalExpensesMade++;
-                        travelExpensesMade++;
-                        break;
-                    case "Other":
-                        otherTotal += receiptDocReference.get('total');
-                        totalExpensesMade++;
-                        otherExpensesMade++;
-                }
-
-                if(j === receiptSnapshot.size - 1) {
-                    cumulativeTotal += perUserTotal;
-                    perUserTotal = 0;
-                }
-            }
-        }
-        return [foodTotal/100, toolsTotal/100, travelTotal/100, otherTotal/100, cumulativeTotal/100, foodExpensesMade, toolsExpensesMade, travelExpensesMade, otherExpensesMade, totalExpensesMade];
-    }
+    const userID = context.params.userID;
+    console.log("USERID: " + userID);
+    const statsRef = firestore.doc('cumulativeStats/cumulativeStats');
 
 });
-

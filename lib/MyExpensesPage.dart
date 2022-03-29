@@ -38,7 +38,6 @@ class _MyExpensesPageState extends State<MyExpensesPage> {
             return RefreshIndicator(
                 child: _getChartListView(snapshot), onRefresh: _onRefresh);
           }
-
           return Container();
         },
       ),

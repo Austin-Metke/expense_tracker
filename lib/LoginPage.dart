@@ -38,6 +38,9 @@ class _LoginPageState extends State<LoginPage> {
   late bool? _wrongPassword = false;
   late bool? _tooManyRequests = false;
 
+  final _phoneTextFieldController = TextEditingController();
+  final _passwordTextFieldController = TextEditingController();
+
   _submitForm() async {
     final formState = _key.currentState;
 
@@ -46,7 +49,8 @@ class _LoginPageState extends State<LoginPage> {
           email: _phoneNumber + "@fakeemail.com", password: _password);
       try {
         var user = await Global.auth.signInWithCredential(emailCredential);
-
+        _phoneTextFieldController.clear();
+        _passwordTextFieldController.clear();
         if (user.additionalUserInfo!.isNewUser) {
           //TODO Create change password page for new users
           _showChangePasswordPage();
@@ -151,6 +155,7 @@ class _LoginPageState extends State<LoginPage> {
         onChanged: (value) => _phoneNumber =
             toNumericString(value, allowHyphen: false, allowPeriod: false),
         onFieldSubmitted: (value) => _key.currentState?.validate(),
+        controller: _phoneTextFieldController,
         keyboardType: TextInputType.phone,
         inputFormatters: [Global.phoneInputFormatter],
       );
@@ -173,6 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                 })),
       ),
       validator: (value) => _passwordValidator(value),
+      controller: _passwordTextFieldController,
       obscureText: !_visPass,
       onChanged: (value) => _password = value,
       onFieldSubmitted: (value) => _key.currentState?.validate());

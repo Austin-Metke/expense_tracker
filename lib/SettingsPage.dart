@@ -12,13 +12,12 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
 
   final String? _userName = Global.auth.currentUser!.displayName;
-  String? _phoneNumber = "1111111";
+  final String? _phoneNumber = Global.auth.currentUser!.phoneNumber;
 
   @override
   void initState() {
     super.initState();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +38,6 @@ class _SettingsPageState extends State<SettingsPage> {
               child: TextFormField(
                 enabled: false,
                 readOnly: true,
-
                 initialValue: _userName,
                 decoration: const InputDecoration(
                   labelText: "Username",
@@ -71,15 +69,21 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
 
             ], onChanged: (value) => _switchLanguage(value),
-
-
             ),
-
-            TextButton(
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.25,
+            child: TextButton(
               onPressed: _logOut,
-              child: const Text("Logout",),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.logout),
+                  Text("Logout",),
+                ],
+              ),
               style: Global.defaultButtonStyle,
             ),
+            )
           ],
         ),
       ),

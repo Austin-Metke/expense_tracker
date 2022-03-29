@@ -11,7 +11,9 @@ class UserDetailsPage extends StatefulWidget {
   final Map<String, dynamic> userData;
   final String? userDocumentID;
 
-  const UserDetailsPage({Key? key, required this.userData,required this.userDocumentID}) : super(key: key);
+  const UserDetailsPage(
+      {Key? key, required this.userData, required this.userDocumentID})
+      : super(key: key);
 
   @override
   _UserDetailsPageState createState() => _UserDetailsPageState();
@@ -36,153 +38,128 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
     _phoneNumber = widget.userData['phoneNumber'];
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-            appBar: AppBar(
-              centerTitle: true,
-              title: Text("Details for $_name"),
-              actions: [
-                PopupMenuButton<int>(
-                  itemBuilder: (context) {
-                    return [
-                      const PopupMenuItem<int>(
-                        value: 0,
-                        child: Text("View receipts"),
-                      ),
-                    ];
-                  },
-                  onSelected: (value) {
-                    switch (value) {
-                      case 0:
-                        _viewUserReceiptsPage(
-                            userPhoneNumber: _phoneNumber, userName: _name);
-                        break;
-                    }
-                  },
-                ),
-              ],
-              backgroundColor: Global.colorBlue,
+        appBar: AppBar(
+          centerTitle: true,
+          title: Text("Details for $_name"),
+          actions: [
+            PopupMenuButton<int>(
+              itemBuilder: (context) {
+                return [
+                  const PopupMenuItem<int>(
+                    value: 0,
+                    child: Text("View receipts"),
+                  ),
+                ];
+              },
+              onSelected: (value) {
+                switch (value) {
+                  case 0:
+                    _viewUserReceiptsPage(
+                        userPhoneNumber: _phoneNumber, userName: _name);
+                    break;
+                }
+              },
             ),
-            body: Center(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: !(_receiptsUploaded == 0 ||
-                              _receiptsUploaded == null)
-                          ? FutureBuilder(
-                              future: _getUserDataByTotal(),
-                              builder: (BuildContext context,
-                                  AsyncSnapshot<List<ChartData>> snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return Container();
-                                } else if (snapshot.hasData) {
-                                  if (snapshot.hasError) {
-                                    return const Text("Something went wrong");
-                                  }
-                                  return SfCircularChart(
-                                    borderWidth: 2,
-                                    borderColor: Colors.black,
-                                    title: ChartTitle(
-                                        text:
-                                            "Expenses for the week:  ${_total == null || _total == 0 ? "none" : "\$ $_total"}"),
-                                    legend: Legend(
-                                        isVisible: true,
-                                        position: LegendPosition.top,
-                                        offset: Offset.zero),
-                                    series: <CircularSeries>[
-                                      PieSeries<ChartData, String>(
-                                          radius: "75%",
-                                          dataSource: snapshot.data,
-                                          pointColorMapper:
-                                              (ChartData data, _) => data.color,
-                                          xValueMapper: (ChartData data, _) =>
-                                              data.x,
-                                          yValueMapper: (ChartData data, _) =>
-                                              data.y,
-                                          dataLabelMapper:
-                                              (ChartData data, _) =>
-                                                  "\$ ${data.y.toString()}",
-                                          legendIconType: LegendIconType.circle,
-                                          dataLabelSettings:
-                                              const DataLabelSettings(
-                                            showZeroValue: false,
-                                            isVisible: true,
-                                            labelIntersectAction:
-                                                LabelIntersectAction.shift,
-                                            overflowMode: OverflowMode.shift,
-                                            connectorLineSettings:
-                                                ConnectorLineSettings(
-                                              color: Colors.black,
-                                              type: ConnectorType.line,
-                                            ),
-                                            labelPosition:
-                                                ChartDataLabelPosition.outside,
-                                          ))
-                                    ],
-                                  );
-                                }
-                                return Container();
-                              },
-                            )
-                          : const Text("No expenses made"),
-                    ),
-                  ),
+          ],
+          backgroundColor: Global.colorBlue,
+        ),
+        body: FutureBuilder(
+            future: _getChartData(),
+            builder: (BuildContext context,
+                AsyncSnapshot<Map<String, dynamic>> snapshot) {
+              if (snapshot.connectionState == ConnectionState.none) {
+                return Container();
+              } else if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: Text("Loading..."));
+              } else if (snapshot.hasError) {
+                print(snapshot.error);
+                return const Text("An unknown error occurred!");
+              } else if (snapshot.hasData) {
+                return RefreshIndicator(
+                    child: _getChartListView(snapshot), onRefresh: _onRefresh);
+              }
+              return Container();
+            }));
+  }
 
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.25,
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    child: !(_receiptsUploaded == 0 ||
-                            _receiptsUploaded == null)
-                        ? FutureBuilder(
-                            future: _getUserDataByReceiptsUploaded(),
-                            builder: (BuildContext context,
-                                AsyncSnapshot<List<ChartData>> snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return Container();
-                              } else if (snapshot.hasData) {
-                                if (snapshot.hasError) {
-                                  return const Text("Something went wrong");
-                                }
-                                return SfCartesianChart(
-                                    borderWidth: 2,
-                                    borderColor: Colors.black,
-                                    title: ChartTitle(
-                                        text:
-                                            "Expenses Made: $_receiptsUploaded"),
-                                    primaryXAxis: CategoryAxis(
-                                      isVisible: true,
-                                    ),
-                                    primaryYAxis: NumericAxis(
-                                        interval: 1,
-                                        isVisible: true,
-                                        rangePadding: ChartRangePadding.auto),
-                                    series: <ChartSeries<ChartData, String>>[
-                                      ColumnSeries<ChartData, String>(
-                                        dataSource: snapshot.data!,
-                                        xValueMapper: (ChartData data, _) =>
-                                            data.x,
-                                        yValueMapper: (ChartData data, _) =>
-                                            data.y,
-                                        pointColorMapper: (ChartData data, _) =>
-                                            data.color,
-                                      ),
-                                    ]);
-                              }
-                              return Container();
-                            },
-                          )
-                        : Container(),
-                  ),
-                ],
-              ),
-            ));
+  Future<void> _onRefresh() async {}
+
+  _getChartListView(AsyncSnapshot<Map<String, dynamic>> snapshot) {
+    var columnChartData = snapshot.data!['columnChartData'];
+    var pieChartData = snapshot.data!['pieChartData'];
+    double total = snapshot.data!['total'];
+    int receiptsUploaded = snapshot.data!['receiptsUploaded'].toInt();
+
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: SfCircularChart(
+              borderWidth: 2,
+              borderColor: Colors.black,
+              title: ChartTitle(
+                  text:
+                      "Expenses for $_name:  ${total == 0 ? "none" : "\$ ${total.toStringAsFixed(2)}"}"),
+              legend: Legend(
+                  isVisible: true,
+                  position: LegendPosition.top,
+                  offset: Offset.zero),
+              series: <CircularSeries>[
+                PieSeries<ChartData, String>(
+                    radius: "75%",
+                    dataSource: pieChartData,
+                    pointColorMapper: (ChartData data, _) => data.color,
+                    xValueMapper: (ChartData data, _) => data.x,
+                    yValueMapper: (ChartData data, _) => data.y,
+                    dataLabelMapper: (ChartData data, _) =>
+                        "\$ ${data.y.toStringAsFixed(2)}",
+                    legendIconType: LegendIconType.circle,
+                    dataLabelSettings: const DataLabelSettings(
+                      showZeroValue: false,
+                      isVisible: true,
+                      labelIntersectAction: LabelIntersectAction.shift,
+                      overflowMode: OverflowMode.shift,
+                      connectorLineSettings: ConnectorLineSettings(
+                        color: Colors.black,
+                        type: ConnectorType.line,
+                      ),
+                      labelPosition: ChartDataLabelPosition.outside,
+                    ))
+              ],
+            ),
+          ),
+        ),
+        Padding(
+            padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+            child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.25,
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: SfCartesianChart(
+                    borderWidth: 2,
+                    borderColor: Colors.black,
+                    title: ChartTitle(text: "Expenses Made: $receiptsUploaded"),
+                    primaryXAxis: CategoryAxis(
+                      isVisible: true,
+                    ),
+                    primaryYAxis: NumericAxis(
+                        interval: 1,
+                        isVisible: true,
+                        rangePadding: ChartRangePadding.auto),
+                    series: <ChartSeries<ChartData, String>>[
+                      ColumnSeries<ChartData, String>(
+                        dataSource: columnChartData,
+                        xValueMapper: (ChartData data, _) => data.x,
+                        yValueMapper: (ChartData data, _) => data.y,
+                        pointColorMapper: (ChartData data, _) => data.color,
+                      ),
+                    ]))),
+      ],
+    );
   }
 
   void _viewUserReceiptsPage(
@@ -196,76 +173,44 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                 )));
   }
 
-  Future<List<ChartData>> _getUserDataByTotal() async {
-
-    var receiptSnapshot = await FirebaseFirestore.instance
-        .collection('users/$_userDocumentID/receipts')
+  Future<Map<String, dynamic>> _getChartData() async {
+    final expenses = await FirebaseFirestore.instance
+        .collection('stats')
+        .doc(_userDocumentID)
         .get();
 
-    double tools = 0;
-    double food = 0;
-    double other = 0;
-    double travel = 0;
+    final double foodTotal = expenses.get('foodTotal').toDouble() / 100;
+    final double toolsTotal = expenses.get('toolsTotal').toDouble() / 100;
+    final double travelTotal = expenses.get('travelTotal').toDouble() / 100;
+    final double otherTotal = expenses.get('otherTotal').toDouble() / 100;
+    final double cumulativeTotal =
+        expenses.get('receiptTotal').toDouble() / 100;
 
-    for (var e in receiptSnapshot.docs) {
-      switch (e.get('expenseType')) {
-        case ExpenseType.food:
-          food += e.get('total');
-          break;
-        case ExpenseType.tools:
-          tools += e.get('total');
-          break;
-        case ExpenseType.other:
-          other += e.get('total');
-          break;
-        case ExpenseType.travel:
-          travel += e.get('total');
-          break;
-      }
-    }
+    final double foodCount = expenses.get('foodCount').toDouble();
+    final double toolsCount = expenses.get('toolsCount').toDouble();
+    final double travelCount = expenses.get('travelCount').toDouble();
+    final double otherCount = expenses.get('otherCount').toDouble();
+    final double receiptCount = expenses.get('receiptCount').toDouble();
 
-    return <ChartData>[
-      ChartData(ExpenseType.food, food / 100, Colors.green),
-      ChartData(ExpenseType.tools, tools / 100, Colors.purple),
-      ChartData(ExpenseType.travel, travel / 100, Colors.blue),
-      ChartData(ExpenseType.other, other / 100, Colors.red),
+    var pieChartData = <ChartData>[
+      ChartData(ExpenseType.food, foodTotal, Colors.green),
+      ChartData(ExpenseType.tools, toolsTotal, Colors.purple),
+      ChartData(ExpenseType.travel, travelTotal, Colors.blue),
+      ChartData(ExpenseType.other, otherTotal, Colors.red),
     ];
-  }
 
-  Future<List<ChartData>> _getUserDataByReceiptsUploaded() async {
-
-    var receiptSnapshot = await FirebaseFirestore.instance
-        .collection('users/$_userDocumentID/receipts')
-        .get();
-
-    int tools = 0;
-    int food = 0;
-    int other = 0;
-    int travel = 0;
-
-    for (var e in receiptSnapshot.docs) {
-      switch (e.get('expenseType')) {
-        case ExpenseType.food:
-          food++;
-          break;
-        case ExpenseType.tools:
-          tools++;
-          break;
-        case ExpenseType.other:
-          other++;
-          break;
-        case ExpenseType.travel:
-          travel++;
-          break;
-      }
-    }
-    return <ChartData>[
-      ChartData("${ExpenseType.food}: $food", food.toDouble(), Colors.green),
-      ChartData(
-          "${ExpenseType.tools}: $tools", tools.toDouble(), Colors.purple),
-      ChartData(
-          "${ExpenseType.travel}: $travel", travel.toDouble(), Colors.blue),
-      ChartData("${ExpenseType.other}: $other", other.toDouble(), Colors.red),
+    var columnChartData = <ChartData>[
+      ChartData(ExpenseType.food, foodCount, Colors.green),
+      ChartData(ExpenseType.tools, toolsCount, Colors.purple),
+      ChartData(ExpenseType.travel, travelCount, Colors.blue),
+      ChartData(ExpenseType.other, otherCount, Colors.red),
     ];
+
+    return <String, dynamic>{
+      'total': cumulativeTotal,
+      "receiptsUploaded": receiptCount,
+      "pieChartData": pieChartData,
+      "columnChartData": columnChartData,
+    };
   }
 }

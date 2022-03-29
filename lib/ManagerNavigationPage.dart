@@ -1,7 +1,6 @@
 import 'package:expense_tracker/ExpensesOverviewPage.dart';
 import 'package:expense_tracker/MyExpensesPage.dart';
 import 'package:expense_tracker/SettingsPage.dart';
-import 'package:expense_tracker/UploadReceiptPage.dart';
 import 'package:flutter/material.dart';
 import 'ViewUsersPage.dart';
 import 'Global.dart';
@@ -73,7 +72,7 @@ class _ManagerNavigationPageState extends State<ManagerNavigationPage> {
         body: IndexedStack(
           index: _selectedIndex,
           children: _managerPages
-        ));
+        ),);
   }
 
 }

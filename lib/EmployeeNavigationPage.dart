@@ -1,7 +1,5 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-
+import 'Global.dart';
 import 'MyExpensesPage.dart';
 import 'SettingsPage.dart';
 import 'ViewReceiptsPage.dart';
@@ -19,26 +17,41 @@ class _EmployeeNavigationPageState extends State<EmployeeNavigationPage> {
     ViewUploadedReceiptsPage(),
     SettingsPage(),
   ];
+
+  int _selectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
+
+    void _onBarTap(int index) => setState(() => _selectedIndex = index);
+
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.shifting,
+        onTap: _onBarTap,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.pages),
             label: "My Expenses",
+            backgroundColor: Global.colorBlue,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: "My receipts",
+            backgroundColor: Global.colorBlue,
           ),
           BottomNavigationBarItem(
             icon: Icon(
               Icons.settings,
             ),
             label: "Settings",
+            backgroundColor: Global.colorBlue,
           ),
         ],
+      ),
+      body: IndexedStack(
+        children: _employeePages,
+        index: _selectedIndex,
       ),
     );
   }

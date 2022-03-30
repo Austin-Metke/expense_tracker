@@ -110,7 +110,6 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
 
 
             await auth.updateUser(updatedUser.uid, {
-
                 displayName: data.name,
                 email: data.email,
                 password: data.password,
@@ -421,10 +420,11 @@ exports.archive = functions.pubsub.schedule('0 0 * * 6').onRun(async(context) =>
 
 
 
-exports.setExpenses = functions.region('us-west2').firestore.document('stats/{userID}').onWrite(async (change, context ) => {
+exports.setExpenses = functions.region('us-west2').firestore.document('stats/{userID}').onUpdate(async (change, context ) => {
 
     const userID = context.params.userID;
     console.log("USERID: " + userID);
     const statsRef = firestore.doc('cumulativeStats/cumulativeStats');
+    
 
 });

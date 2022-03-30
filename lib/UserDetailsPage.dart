@@ -3,6 +3,7 @@ import 'package:expense_tracker/EmployeeUploadedReceiptsPage.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'ChartData.dart';
+import 'ArchivedReceiptDatePicker.dart';
 import 'Global.dart';
 import 'Receipt.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -52,14 +53,24 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                     value: 0,
                     child: Text("View receipts"),
                   ),
+
+                  const PopupMenuItem(
+                    value: 1,
+                    child: Text("View archived receipts"),
+
+                  ),
+
                 ];
               },
               onSelected: (value) {
                 switch (value) {
                   case 0:
                     _viewUserReceiptsPage(
-                        userPhoneNumber: _phoneNumber, userName: _name);
+                        userName: _name, userID: _userDocumentID);
                     break;
+                  case 1:
+                    _viewUserArchivedReceiptsPage(
+                        userDocumentID: _userDocumentID, userName: _name);
                 }
               },
             ),
@@ -78,14 +89,22 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                 print(snapshot.error);
                 return const Text("An unknown error occurred!");
               } else if (snapshot.hasData) {
-                return RefreshIndicator(
-                    child: _getChartListView(snapshot), onRefresh: _onRefresh);
+                if (snapshot.data!['receiptCount'] == 0) {
+                  return const Text("No expenses have been made");
+                } else {
+                  return RefreshIndicator(
+                      child: _getChartListView(snapshot),
+                      onRefresh: _onRefresh);
+                }
               }
               return Container();
             }));
   }
 
-  Future<void> _onRefresh() async {}
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => {});
+  }
 
   _getChartListView(AsyncSnapshot<Map<String, dynamic>> snapshot) {
     var columnChartData = snapshot.data!['columnChartData'];
@@ -163,12 +182,23 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
   }
 
   void _viewUserReceiptsPage(
-      {required String? userPhoneNumber, required String? userName}) {
+      {required String? userID, required String? userName}) {
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (BuildContext context) => EmployeeUploadedReceiptsPage(
-                  phoneNumber: userPhoneNumber,
+                  userID: userID,
+                  name: userName,
+                )));
+  }
+
+  void _viewUserArchivedReceiptsPage(
+      {required String? userDocumentID, required String userName}) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (BuildContext context) => ArchivedReceiptDatePickerPage(
+                  userID: userDocumentID,
                   name: userName,
                 )));
   }

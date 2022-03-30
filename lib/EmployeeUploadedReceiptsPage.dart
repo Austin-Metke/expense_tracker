@@ -5,11 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class EmployeeUploadedReceiptsPage extends StatefulWidget {
-  final String? phoneNumber;
   final String? name;
-
+  final String? userID;
   const EmployeeUploadedReceiptsPage(
-      {Key? key, required this.phoneNumber, required this.name})
+      {Key? key, required this.name, required this.userID})
       : super(key: key);
 
   @override
@@ -24,11 +23,13 @@ class _EmployeeUploadedReceiptsPageState
   late Stream<QuerySnapshot> _receiptStream;
   late bool isLoading;
 
+  late String? _userID;
+
   @override
   initState() {
     isLoading = true;
     super.initState();
-    _phoneNumber = widget.phoneNumber;
+    _userID =  widget.userID;
     _name = widget.name;
     _receiptStream = _getReceiptStream();
   }
@@ -145,48 +146,31 @@ class _EmployeeUploadedReceiptsPageState
   }
 
   Stream<QuerySnapshot> _getReceiptStream() async* {
-    var userQuery = await FirebaseFirestore.instance
-        .collection("users")
-        .where(("phoneNumber"), isEqualTo: _phoneNumber)
-        .get();
-
     yield* FirebaseFirestore.instance
-        .collection("users/${userQuery.docs.first.id}/receipts")
+        .collection("users/$_userID/receipts")
         .snapshots();
   }
 
   Stream<QuerySnapshot> _getReceiptStreamByValue() async* {
-    var userQuery = await FirebaseFirestore.instance
-        .collection("users")
-        .where(("phoneNumber"), isEqualTo: _phoneNumber)
-        .get();
+
 
     yield* FirebaseFirestore.instance
-        .collection("users/${userQuery.docs.first.id}/receipts")
+        .collection("users/$_userID/receipts")
         .orderBy('total', descending: true)
         .snapshots();
   }
 
   Stream<QuerySnapshot> _getReceiptStreamByDateAscending() async* {
-    var userQuery = await FirebaseFirestore.instance
-        .collection("users")
-        .where(("phoneNumber"), isEqualTo: _phoneNumber)
-        .get();
-
     yield* FirebaseFirestore.instance
-        .collection("users/${userQuery.docs.first.id}/receipts")
+        .collection("users/$_userID/receipts")
         .orderBy('date', descending: true)
         .snapshots();
   }
 
   Stream<QuerySnapshot> _getReceiptStreamByDateDescending() async* {
-    var userQuery = await FirebaseFirestore.instance
-        .collection("users")
-        .where(("phoneNumber"), isEqualTo: _phoneNumber)
-        .get();
 
     yield* FirebaseFirestore.instance
-        .collection("users/${userQuery.docs.first.id}/receipts")
+        .collection("users/$_userID/receipts")
         .orderBy('date', descending: false)
         .snapshots();
   }

@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'ChartData.dart';
@@ -35,8 +34,12 @@ class _MyExpensesPageState extends State<MyExpensesPage> {
             print(snapshot.error);
             return const Text("An unknown error occurred!");
           } else if (snapshot.hasData) {
-            return RefreshIndicator(
-                child: _getChartListView(snapshot), onRefresh: _onRefresh);
+            if(snapshot.data!['receiptsUploaded'] == 0) {
+              return const Center(child: Text("No expenses have been made"));
+            } else {
+              return RefreshIndicator(
+                  child: _getChartListView(snapshot), onRefresh: _onRefresh);
+            }
           }
           return Container();
         },
@@ -53,7 +56,7 @@ class _MyExpensesPageState extends State<MyExpensesPage> {
     return ListView(
       children: [
         Padding(
-          padding: EdgeInsets.all(10),
+          padding: const EdgeInsets.all(10),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
             child: SfCircularChart(

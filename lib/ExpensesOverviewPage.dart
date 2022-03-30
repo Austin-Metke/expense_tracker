@@ -110,7 +110,7 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
           ),
 
           Padding(
-            padding: EdgeInsets.all(10),
+            padding: const EdgeInsets.all(10),
             child: SizedBox(
     child: SfCartesianChart(
               borderWidth: 2,

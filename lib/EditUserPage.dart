@@ -142,7 +142,7 @@ class _EditUserPageState extends State<EditUserPage> {
   }
 
   Widget phoneNumberField() => TextFormField(
-        initialValue: _oldphoneNumber,
+        initialValue: Global.phoneInputFormatter.applyMask(_oldphoneNumber!).text,
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(

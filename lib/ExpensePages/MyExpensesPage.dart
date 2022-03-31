@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'ChartData.dart';
-import 'Global.dart';
-import 'Receipt.dart';
+import '../DataTypes/ChartData.dart';
+import '../Global.dart';
+import '../DataTypes/Receipt.dart';
 
 class MyExpensesPage extends StatefulWidget {
   const MyExpensesPage({Key? key}) : super(key: key);

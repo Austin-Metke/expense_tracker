@@ -1,12 +1,12 @@
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:expense_tracker/EmployeeNavigationPage.dart';
+import 'package:expense_tracker/NavigationPages/EmployeeNavigationPage.dart';
 import 'package:expense_tracker/NewUserPasswordChangePage.dart';
-import 'package:expense_tracker/ManagerNavigationPage.dart';
+import 'package:expense_tracker/NavigationPages/ManagerNavigationPage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:oktoast/oktoast.dart';
-import 'Global.dart';
+import '../Global.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 
 class ExpenseTracker extends StatelessWidget {
@@ -14,6 +14,9 @@ class ExpenseTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+
+
     return const OKToast(
       child: MaterialApp(
           home: Scaffold(resizeToAvoidBottomInset: true, body: LoginPage())),

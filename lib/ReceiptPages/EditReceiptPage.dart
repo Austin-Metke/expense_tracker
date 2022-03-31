@@ -1,30 +1,51 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:expense_tracker/FirebaseOperations/FirestoreActions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:oktoast/oktoast.dart';
-import 'Global.dart';
-import 'Receipt.dart';
+import '../Global.dart';
+import '../DataTypes/Receipt.dart';
 
-class ReceiptUploadPage extends StatefulWidget {
-  const ReceiptUploadPage({Key? key}) : super(key: key);
+class EditReceiptPage extends StatefulWidget {
+  final Map<String, dynamic> receiptData;
+  final String? receiptID;
+
+  const EditReceiptPage({Key? key, required this.receiptData, required this.receiptID})
+      : super(key: key);
 
   @override
-  _ReceiptUploadPageState createState() => _ReceiptUploadPageState();
+  _EditReceiptPageState createState() => _EditReceiptPageState();
 }
 
-class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
+class _EditReceiptPageState extends State<EditReceiptPage> {
   final _key = GlobalKey<FormState>();
+
+  String? _initialTotal;
+  double? _total;
+  String? _encodedImage;
   File? _image;
-  double? _receiptTotal;
   String? _comment;
+  String? _expenseType;
   var _enableButton = true;
-  String _expenseType = ExpenseType.travel;
   final _characterLimit = 300;
+  late final String? _receiptID;
   final dbRef = FirebaseFirestore.instance.collection('users');
+
+  @override
+  void initState() {
+    super.initState();
+    _initialTotal = (widget.receiptData['total'] / 100).toStringAsFixed(2);
+    _total = widget.receiptData['total'];
+    _comment = widget.receiptData['comment'];
+    _encodedImage = widget.receiptData['image'];
+    _receiptID = widget.receiptID;
+    _expenseType = widget.receiptData['expenseType'];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +55,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
           appBar: AppBar(
             backgroundColor: Global.colorBlue,
             centerTitle: true,
-            title: const Text("Upload Receipt"),
+            title: const Text("Edit receipt"),
           ),
           resizeToAvoidBottomInset: true,
           body: SingleChildScrollView(
@@ -46,26 +67,21 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: Container(
-                      child: _validateImage(_image)
-                          ? Image.file(
-                              _image!,
-                              filterQuality: FilterQuality.medium,
-                              width: 150,
-                              height: 150,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              width: 150,
-                              height: 150,
-                              color: Colors.black12,
-                              child: const Center(
-                                child: Text(
-                                  "Please Select image",
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                              ),
-                            ),
-                    ),
+                        child: _image == null
+                            ? Image.memory(
+                                base64Decode(_encodedImage!),
+                                filterQuality: FilterQuality.medium,
+                                width: 150,
+                                height: 150,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                _image!,
+                                filterQuality: FilterQuality.medium,
+                                width: 150,
+                                height: 150,
+                                fit: BoxFit.cover,
+                              )),
                   ),
                   //***********************
 
@@ -74,58 +90,71 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                     padding: const EdgeInsets.all(10),
                     child: FittedBox(
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          TextButton(
-                            style: Global.defaultButtonStyle,
-                            child: Row(
-                              children: <Widget>[
-                                const Icon(
-                                  Icons.photo_library_outlined,
-                                ),
-                                Global.defaultIconSpacing,
-                                Text(
-                                  "Pick image from gallery",
-                                  style: TextStyle(
-                                    fontSize:
-                                        MediaQuery.of(context).size.width *
-                                            0.035,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            TextButton(
+                              style: Global.defaultButtonStyle,
+                              child: FittedBox(
+                                  child: Row(
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.photo_library_outlined,
+                                    size: MediaQuery.of(context).size.width *
+                                        0.050,
                                   ),
-                                ),
-                              ],
-                            ),
-                            onPressed: () => getImage(),
-                          ),
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.0150,
-                          ),
-                          TextButton(
-                            style: Global.defaultButtonStyle,
-                            onPressed: () => getCamera(),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Icon(
-                                  Icons.camera_alt,
-                                  size:
-                                      MediaQuery.of(context).size.width * 0.050,
-                                ),
-                                Global.defaultIconSpacing,
-                                Text(
-                                  "Take picture of receipt",
-                                  style: TextStyle(
-                                    fontSize:
-                                        MediaQuery.of(context).size.width *
-                                            0.035,
+                                  SizedBox(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.0150,
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    "Pick image from gallery",
+                                    style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.of(context).size.width *
+                                              0.035,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                              onPressed: () => _getImage(),
                             ),
-                          ),
-                        ],
-                      ),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.0150,
+                            ),
+                            TextButton(
+                              style: Global.defaultButtonStyle,
+                              onPressed: () => _getCamera(),
+                              child: FittedBox(
+                                child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Icon(
+                                        Icons.camera_alt,
+                                        size:
+                                            MediaQuery.of(context).size.width *
+                                                0.050,
+                                      ),
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.0150,
+                                      ),
+                                      Text(
+                                        "Take picture of receipt",
+                                        style: TextStyle(
+                                          fontSize: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.035,
+                                        ),
+                                      ),
+                                    ]),
+                              ),
+                            ),
+                          ]),
                     ),
                   ),
 
@@ -133,26 +162,22 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: TextFormField(
+                      initialValue: _initialTotal,
                       decoration: const InputDecoration(
                         labelText: "Receipt Total",
-                        hintText: "0.00",
                         prefixText: "\$ ",
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                       ),
-                      initialValue: "0.00",
                       showCursor: true,
                       keyboardType: TextInputType.number,
-                      onChanged: (value) => _receiptTotal = double.tryParse(
+                      onChanged: (value) => _total = double.parse(
                           toNumericString(value,
-                              allowPeriod: false, allowHyphen: false)),
+                              allowHyphen: false, allowPeriod: false)),
                       onFieldSubmitted: (value) =>
                           _key.currentState?.validate(),
-                      validator: (value) => _validateTotal(toNumericString(
-                          value,
-                          allowHyphen: false,
-                          allowPeriod: false)),
+                      validator: (value) => _validateTotal(value),
                       inputFormatters: [Global.moneyInputFormatter],
                     ),
                   ),
@@ -162,6 +187,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: TextFormField(
+                      initialValue: _comment,
                       decoration: const InputDecoration(
                         labelText: "Comment",
                         hintText: "Add a comment (optional)",
@@ -179,31 +205,28 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                   //**********************************
 
                   //**********ExpenseTypeDrownDownMenu*********
-
                   DropdownButton<String>(
                       value: _expenseType,
-                      hint: const Text("Expense Type"),
                       items: const [
                         DropdownMenuItem<String>(
-                          child: Text("Travel"),
+                          child: Text(ExpenseType.travel),
                           value: ExpenseType.travel,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text("Food"),
+                          child: Text(ExpenseType.food),
                           value: ExpenseType.food,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text("Tools"),
+                          child: Text(ExpenseType.tools),
                           value: ExpenseType.tools,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text("Other"),
+                          child: Text(ExpenseType.other),
                           value: ExpenseType.other,
                         ),
                       ],
                       onChanged: (value) =>
-                          setState(() => _expenseType = value!)),
-
+                          setState(() => _expenseType = value)),
                   //**********************************
 
                   //************UploadButton**********
@@ -219,7 +242,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                                     MediaQuery.of(context).size.width * 0.035)),
                         //Ternary operation to ensure _uploadReceipt() isn't called during an upload
                         onPressed: () =>
-                            _enableButton ? _uploadReceipt() : null,
+                            _enableButton ? _updateReceipt() : null,
                       ),
                     ),
                   ),
@@ -231,7 +254,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
         ));
   }
 
-  Future<void> getImage() async {
+  Future _getImage() async {
     try {
       final image = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (image == null) return;
@@ -242,11 +265,11 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
       setState(() => _image = strippedImage);
     } on PlatformException catch (e) {
-      print("Access to gallery was denied $e");
+      _galleryErrorToast();
     }
   }
 
-  Future<void> getCamera() async {
+  Future _getCamera() async {
     try {
       final image = await ImagePicker().pickImage(source: ImageSource.camera);
       if (image == null) return;
@@ -257,90 +280,70 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
       setState(() => _image = strippedImage);
     } on PlatformException catch (e) {
-      _galleryDeniedToast();
+      _cameraErrorToast();
     }
   }
 
-  Future<void> _uploadReceipt() async {
-    final formState = _key.currentState;
+  Future<void> _updateReceipt() async {
+    final formstate = _key.currentState;
+    /*
+    _image represents an image selected from the users gallery or taken with their camera.
+    If the user doesn't update the image, then _image will be null,
+    in which case the image does not need to be updated.
+     */
+    Receipt receipt = (_image == null)
+        ? Receipt(total: _total, comment: _comment, expenseType: _expenseType)
+        : Receipt(
+            total: _total,
+            comment: _comment,
+            image: _image,
+            expenseType: _expenseType);
 
-    if (formState!.validate() && _validateImage(_image)) {
+    if (formstate!.validate()) {
       _uploadWait();
-
-      final Receipt receipt = Receipt(
-          image: _image,
-          total: _receiptTotal,
-          comment: _comment,
-          expenseType: _expenseType);
-      await dbRef
-          .doc(Global.auth.currentUser?.uid)
-          .collection("receipts")
-          .add(receipt.toJson())
-          .then((value) => _uploadSuccess())
-          .onError((error, stackTrace) => _uploadFail());
+      try {
+        await FirestoreActions.updateReceipt(
+          receipt: receipt,
+          receiptID: _receiptID,
+        );
+        _uploadSuccess();
+      } catch (e) {
+        _uploadFail();
+      }
     }
-    await _updateCumulativeTotal();
-  }
-
-  //Updates the users document in Firestore with the cumulative total of all receipts alongside the total for each expense type
-  Future<void> _updateCumulativeTotal() async {
-    double total = 0;
-
-    final receiptCollectionReference =
-        dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
-
-    final receiptQuerySnapshot = await receiptCollectionReference.get();
-    for (var receiptDocument in receiptQuerySnapshot.docs) {
-      var tempTotal = double.parse(receiptDocument.get('total').toString());
-      total += tempTotal;
-
-    }
-
-    await dbRef.doc(Global.auth.currentUser?.uid).update(<String, dynamic>{
-      'total': double.parse(total.toStringAsFixed(2)),
-      'uploadedReceipts': receiptQuerySnapshot.docs.length,
-    });
   }
 
   _validateTotal(String? value) {
-    if (value!.isEmpty || _receiptTotal!.isNaN || double.parse(value) == 0) {
+    if (value!.isEmpty ||
+        _total!.isNaN ||
+        double.parse(toNumericString(value)) == 0) {
       return 'Please enter a total for your receipt';
     }
 
     return null;
   }
 
-  _validateImage(File? value) {
-    if (value == null) {
-      return false;
-    }
-    return true;
-  }
-
   _validateComment(String? value) {
     if (value!.length > _characterLimit) {
       return 'Comment is too long';
     }
-
     return null;
   }
 
   Future<File?> _compressImage(File? image) async {
     final filepath = image?.absolute.path;
-
     var compressedImage = await FlutterNativeImage.compressImage(
       filepath!,
       percentage: Global.imageCompression,
       quality: Global.imageQuality,
     );
-
     return compressedImage;
   }
 
-  _stripImage(File? image) {
+  _stripImage(File? image) async {
     var compressImage = _compressImage(image);
 
-    //TODO Create method to make image monochrome
+    //TODO Create a function that makes image grayscale
 
     return compressImage;
   }
@@ -365,7 +368,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       'Upload complete!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
-      radius: Global.defaultRadius,
+      radius: 10.0,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
@@ -388,9 +391,23 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     );
   }
 
-  _galleryDeniedToast() {
+  _cameraErrorToast() {
     showToast(
-      'Unable to access gallery!',
+      'Access to camera was denied!',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.red,
+      radius: Global.defaultRadius,
+      textStyle: TextStyle(
+          fontSize: MediaQuery.of(context).size.width * 0.040,
+          color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+  }
+
+  _galleryErrorToast() {
+    showToast(
+      'Access to gallery was denied!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
       radius: Global.defaultRadius,

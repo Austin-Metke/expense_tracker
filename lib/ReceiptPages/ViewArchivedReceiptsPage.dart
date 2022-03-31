@@ -7,7 +7,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 class ViewArchivedReceiptsPage extends StatefulWidget {
   final DateTime selectedDay;
-  final userID;
+  final String? userID;
   const ViewArchivedReceiptsPage({Key? key, required this.selectedDay, required this.userID}) : super(key: key);
 
   @override

@@ -1,4 +1,3 @@
-import 'Global.dart';
 
 class User {
   String? name;
@@ -10,8 +9,9 @@ class User {
 
   toJson() => _serializeToJson(this);
 
-  User(
-      {required this.name, required this.password, required this.email, this.oldEmail, required this.isManager, required this.phoneNumber});
+  //Proper way to create a constructor in Dart
+  User({required this.name, required this.password, required this.email, this.oldEmail, required this.isManager, required this.phoneNumber});
+
 
   Future<Map<String, dynamic>> _serializeToJson(User user) async {
     return <String, dynamic>{

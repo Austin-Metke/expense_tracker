@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:expense_tracker/EmployeeUploadedReceiptsPage.dart';
+import 'package:expense_tracker/ReceiptPages/EmployeeUploadedReceiptsPage.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'ChartData.dart';
-import 'ArchivedReceiptDatePicker.dart';
-import 'Global.dart';
-import 'Receipt.dart';
+import '../DataTypes/ChartData.dart';
+import '../ReceiptPages/ArchivedReceiptDatePicker.dart';
+import '../Global.dart';
+import '../DataTypes/Receipt.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class UserDetailsPage extends StatefulWidget {

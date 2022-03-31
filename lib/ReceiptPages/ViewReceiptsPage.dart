@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:expense_tracker/CustomWidgets/ReceiptWidget.dart';
+import 'package:expense_tracker/FirebaseOperations/FirestoreActions.dart';
 import 'package:expense_tracker/Global.dart';
-import 'package:expense_tracker/UploadReceiptPage.dart';
+import 'package:expense_tracker/ReceiptPages/UploadReceiptPage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
@@ -19,7 +21,7 @@ class ViewUploadedReceiptsPage extends StatefulWidget {
 class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   final dbRef = FirebaseFirestore.instance.collection('users');
 
-   Stream<QuerySnapshot> _receiptStream = FirebaseFirestore.instance
+  Stream<QuerySnapshot> _receiptStream = FirebaseFirestore.instance
       .collection('users/${Global.auth.currentUser!.uid}/receipts')
       .snapshots();
 
@@ -43,9 +45,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   bool _orderByTotal = false;
   bool _orderByDateDescending = false;
   bool _orderByDateAscending = false;
-
   int? selectedValue;
-
   late TapDownDetails _tapDownDetails;
 
   @override
@@ -58,12 +58,14 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
               centerTitle: true,
               title: const Text("Uploaded Receipts"),
               actions: [
+
                 PopupMenuButton(
                     itemBuilder: (context) {
                       return [
                         const PopupMenuItem<int>(
                           value: 0,
                           child: Text("Add Receipt"),
+
                         ),
                         PopupMenuItem<int>(
                           value: 1,
@@ -110,13 +112,16 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                 } else if (snapshot.connectionState == ConnectionState.active ||
                     snapshot.connectionState == ConnectionState.done) {
                   if (snapshot.hasError) {
-                    return const Center(
-                        child: Text("An unknown error has occurred"));
+                    return RefreshIndicator(
+                        onRefresh: _onRefresh,
+                        child: const Center(
+                            child: Text(
+                                "An unknown error has occurred, please refresh and try again")));
                   } else if (snapshot.hasData) {
                     return RefreshIndicator(
-                        onRefresh:() => _onRefresh(),
-
-                        child: _getDocumentListView(snapshot));                  }
+                        onRefresh: () => _onRefresh(),
+                        child: _getDocumentListView(snapshot));
+                  }
                 }
                 return RefreshIndicator(
                     onRefresh: () => _onRefresh(),
@@ -156,33 +161,14 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                 )));
   }
 
-  _deleteReceipt(String documentID) {
+  _deleteReceipt({required String receiptID}) async {
     _loadingToast();
-    FirebaseFirestore.instance
-        .doc("users/${Global.auth.currentUser!.uid}/receipts/$documentID")
-        .delete()
-        .then((value) => {_successToast(), _updateCumulativeTotal()})
-        .catchError((onError) => _errorToast());
-  }
-
-  //Updates the users document in Firestore with the cumulative total of all receipts and amount of receipts uploaded
-  Future<void> _updateCumulativeTotal() async {
-    final receiptCollectionReference =
-        dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
-
-    double total = 0;
-
-    final receiptQuerySnapshot = await receiptCollectionReference.get();
-
-    for (var receiptDocument in receiptQuerySnapshot.docs) {
-      var tempTotal = double.parse(receiptDocument.get('total').toString());
-      total += tempTotal;
+    try {
+      await FirestoreActions.deleteReceipt(receiptID: receiptID);
+      _successToast();
+    } catch (e) {
+      _errorToast();
     }
-
-    dbRef.doc(Global.auth.currentUser?.uid).update(<String, dynamic>{
-      'total': double.parse(total.toStringAsFixed(2)),
-      'uploadedReceipts': receiptQuerySnapshot.docs.length,
-    });
   }
 
   _successToast() {
@@ -255,7 +241,6 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
         int? date = receiptData['date'];
         Uint8List image = base64Decode(receiptData['image']);
         String expenseType = receiptData['expenseType'];
-
         return InkWell(
           onTap: () async => {
             selectedValue = await showMenu<int>(
@@ -297,50 +282,26 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
               }
             else if (selectedValue == 1)
               {
-                _deleteReceipt(document.id),
+                _deleteReceipt(receiptID: document.id),
               }
           },
           onTapDown: (tapDownDetails) => _tapDownDetails = tapDownDetails,
           child: Container(
-              margin: const EdgeInsets.all(10),
-              color: const Color.fromARGB(100, 121, 121, 121),
-              child: Column(
-                children: [
-                  Image.memory(image),
-
-                  Text(
-                    "Total: ${NumberFormat.simpleCurrency().format(total)}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                    ),
-                  ),
-
-              Text("Expense type: $expenseType", style: const TextStyle(
-                fontSize: 18,
-              )),
-              Text("Comment: ${(comment != null || comment == "" ? comment : "none")}",
-                        style: const TextStyle(
-                          fontSize: 18,
-                        )),
-
-                  //Ternary operation to ensure build() doesn't break on the off-chance an upload date isn't stored
-                  Text("Uploaded on: ${(date is int ? "${_getDateUploaded(date)} at ${_getTimeUploaded(date)}" : "Unknown")}")
-
-              ])),
+            padding: const EdgeInsets.all(10),
+            child: ReceiptWidget(
+              comment: comment,
+              date: date,
+              expenseType: expenseType,
+              image: image,
+              total: total,
+              backgroundColor: Colors.black26,
+            ),
+          ),
         );
       }).toList(),
     );
   }
 
-  _getDateUploaded(int time) {
-    return DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY)
-        .format(DateTime.fromMicrosecondsSinceEpoch(time));
-  }
-
-  _getTimeUploaded(int time) {
-    return DateFormat(DateFormat.HOUR_MINUTE)
-        .format(DateTime.fromMicrosecondsSinceEpoch(time));
-  }
 
   Future<void> _onRefresh() async {
     await Future.delayed(const Duration(seconds: 2));

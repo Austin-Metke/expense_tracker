@@ -1,22 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:expense_tracker/Global.dart';
-import 'package:expense_tracker/UserDetailsPage.dart';
-import 'package:expense_tracker/addUserPage.dart';
-import 'package:expense_tracker/EditUserPage.dart';
+import 'package:expense_tracker/UserPages/UserDetailsPage.dart';
+import 'package:expense_tracker/UserPages/addUserPage.dart';
+import 'package:expense_tracker/UserPages/EditUserPage.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'Global.dart';
+import '../Global.dart';
 
-class ViewUserPage extends StatefulWidget {
-  const ViewUserPage({Key? key}) : super(key: key);
+class ViewUsersPage extends StatefulWidget {
+  const ViewUsersPage({Key? key}) : super(key: key);
 
   @override
-  _ViewUserPageState createState() => _ViewUserPageState();
+  _ViewUsersPageState createState() => _ViewUsersPageState();
 }
 
-class _ViewUserPageState extends State<ViewUserPage> {
-  var _userStream = FirebaseFirestore.instance.collection('users').snapshots();
+class _ViewUsersPageState extends State<ViewUsersPage> {
+  Stream<QuerySnapshot<Map<String, dynamic>>> _userStream =
+      FirebaseFirestore.instance.collection('users').snapshots();
   late int? selected;
   late String? userDocumentID;
   late TapDownDetails _tapDownDetails;
@@ -70,7 +71,6 @@ class _ViewUserPageState extends State<ViewUserPage> {
           builder:
               (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (snapshot.hasError) {
-              print(snapshot.error);
               return const Text('Something went wrong');
             }
 
@@ -86,15 +86,17 @@ class _ViewUserPageState extends State<ViewUserPage> {
 
   Widget _getUserListView(AsyncSnapshot<QuerySnapshot> snapshot) {
     return ListView(
-      children: snapshot.data!.docs.map((DocumentSnapshot document) {
-        Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
-        var name = data['name'];
-        var email = data['email'];
-        var isManager = (data['isManager']) ? "Manager" : "Employee";
-        return Column(children: [
-          InkWell(
-              onLongPress: () async {
-                selected = (await showMenu<int>(
+      children: snapshot.data!.docs.map(
+        (DocumentSnapshot document) {
+          Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
+          var name = data['name'];
+          var email = data['email'];
+          var isManager = (data['isManager']) ? "Manager" : "Employee";
+          return Column(
+            children: [
+              InkWell(
+                onLongPress: () async {
+                  selected = (await showMenu<int>(
                     context: context,
                     position: RelativeRect.fromLTRB(
                         0,
@@ -105,48 +107,57 @@ class _ViewUserPageState extends State<ViewUserPage> {
                       PopupMenuItem<int>(
                         value: 0,
                         child: FittedBox(
-                            child: Row(
-                          children: const [
-                            Icon(Icons.edit),
-                            Global.defaultIconSpacing,
-                            Text("Edit user")
-                          ],
-                        )),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.edit),
+                              Global.defaultIconSpacing,
+                              Text("Edit user")
+                            ],
+                          ),
+                        ),
                       ),
                       PopupMenuItem<int>(
                         value: 1,
                         child: FittedBox(
-                            child: Row(
-                          children: const [
-                            Icon(Icons.person_remove_outlined),
-                            Global.defaultIconSpacing,
-                            Text("Delete user"),
-                          ],
-                        )),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.person_remove_outlined),
+                              Global.defaultIconSpacing,
+                              Text("Delete user"),
+                            ],
+                          ),
+                        ),
                       ),
-                    ]));
-                if (selected == 0) {
-                  _showEditUserPage(data);
-                } else if (selected == 1) {
-                  _deleteUser(email, name);
-                }
-              },
-              onTap: () {
-                userDocumentID = document.id;
-                _viewUserDetailsPage(userData: data);
-              },
-              onTapDown: (tapDownDetails) => _tapDownDetails = tapDownDetails,
-              child: Container(
-                margin: const EdgeInsets.all(10),
-                color: Colors.white10,
-                child: Row(children: <Widget>[
-                  const Icon(Icons.person_outline),
-
-                  Text((Global.auth.currentUser!.uid == document.id) ? "(you) $name, $isManager" : "name: $name, $isManager"),
-                ]),
-              )),
-        ]);
-      }).toList(),
+                    ],
+                  ));
+                  if (selected == 0) {
+                    _showEditUserPage(data);
+                  } else if (selected == 1) {
+                    _deleteUser(email, name);
+                  }
+                },
+                onTap: () {
+                  userDocumentID = document.id;
+                  _viewUserDetailsPage(userData: data);
+                },
+                onTapDown: (tapDownDetails) => _tapDownDetails = tapDownDetails,
+                child: Container(
+                  margin: const EdgeInsets.all(10),
+                  color: Colors.white10,
+                  child: Row(
+                    children: <Widget>[
+                      const Icon(Icons.person_outline),
+                      Text((Global.auth.currentUser!.uid == document.id)
+                          ? "(you) $name, $isManager"
+                          : "name: $name, $isManager"),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ).toList(),
     );
   }
 
@@ -162,37 +173,36 @@ class _ViewUserPageState extends State<ViewUserPage> {
 
     final functions = FirebaseFunctions.instanceFor(region: 'us-west2');
     HttpsCallable callable = functions.httpsCallable('deleteUser');
+
     final resp = await callable.call(<String, dynamic>{
       'email': email,
-      'jwt': await Global.auth.currentUser?.getIdToken(),
     });
-
-    print(resp.data);
 
     switch (resp.data) {
       case 'can\'t delete self':
         _deleteSelfToast();
         break;
-
       case 'success':
         _successToast(name);
         break;
-
       default:
+        _errorToast(name);
     }
   }
 
   _loadingToast() {
-    showToast('Deleting user...',
-        position: ToastPosition.bottom,
-        backgroundColor: Colors.grey,
-        radius: Global.defaultRadius,
-        textStyle: TextStyle(
-            fontSize: MediaQuery.of(context).size.width * 0.040,
-            color: Colors.white),
-        dismissOtherToast: true,
-        textAlign: TextAlign.center,
-        duration: const Duration(seconds: Duration.secondsPerMinute));
+    showToast(
+      'Deleting user...',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.grey,
+      radius: Global.defaultRadius,
+      textStyle: TextStyle(
+          fontSize: MediaQuery.of(context).size.width * 0.040,
+          color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+      duration: const Duration(seconds: Duration.secondsPerMinute),
+    );
   }
 
   _deleteSelfToast() {
@@ -224,6 +234,20 @@ class _ViewUserPageState extends State<ViewUserPage> {
     );
   }
 
+  _errorToast(String name) {
+    showToast(
+      'Failed to delete user $name',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.red,
+      radius: Global.defaultRadius,
+      textStyle: TextStyle(
+          fontSize: MediaQuery.of(context).size.width * 0.040,
+          color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+  }
+
   _showAddUserPage() {
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => const AddUserPage()));
@@ -231,12 +255,14 @@ class _ViewUserPageState extends State<ViewUserPage> {
 
   _viewUserDetailsPage({required Map<String, dynamic> userData}) {
     Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => UserDetailsPage(
-                  userData: userData,
-                  userDocumentID: userDocumentID,
-                )));
+      context,
+      MaterialPageRoute(
+        builder: (context) => UserDetailsPage(
+          userData: userData,
+          userDocumentID: userDocumentID,
+        ),
+      ),
+    );
   }
 
   _getStream() {

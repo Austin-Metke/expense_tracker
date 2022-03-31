@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'Global.dart';
-import 'MyExpensesPage.dart';
-import 'SettingsPage.dart';
-import 'ViewReceiptsPage.dart';
+import '../Global.dart';
+import '../ExpensePages/MyExpensesPage.dart';
+import '../SettingsPage.dart';
+import '../ReceiptPages/ViewReceiptsPage.dart';
 
 class EmployeeNavigationPage extends StatefulWidget {
   const EmployeeNavigationPage({Key? key}) : super(key: key);
@@ -29,6 +29,9 @@ class _EmployeeNavigationPageState extends State<EmployeeNavigationPage> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.shifting,
         onTap: _onBarTap,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.black,
+        currentIndex: _selectedIndex,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.pages),
@@ -52,6 +55,7 @@ class _EmployeeNavigationPageState extends State<EmployeeNavigationPage> {
       body: IndexedStack(
         children: _employeePages,
         index: _selectedIndex,
+        alignment: Alignment.center,
       ),
     );
   }

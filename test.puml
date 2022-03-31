@@ -1,0 +1,516 @@
+@startuml
+set namespaceSeparator ::
+
+class "expense_tracker::ViewReceiptsPage.dart::ViewUploadedReceiptsPage" {
+  +_ViewUploadedReceiptsPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::ViewReceiptsPage.dart::ViewUploadedReceiptsPage"
+
+class "expense_tracker::ViewReceiptsPage.dart::_ViewUploadedReceiptsPageState" {
+  +CollectionReference<Map<String, dynamic>> dbRef
+  -Stream<QuerySnapshot<Object?>> _receiptStream
+  -Stream<QuerySnapshot<Object?>> _receiptStreamByTotal
+  -Stream<QuerySnapshot<Object?>> _receiptStreamByDateDescending
+  -Stream<QuerySnapshot<Object?>> _receiptStreamByDateAscending
+  -bool _orderByTotal
+  -bool _orderByDateDescending
+  -bool _orderByDateAscending
+  +int? selectedValue
+  -TapDownDetails _tapDownDetails
+  +Widget build()
+  -dynamic _getStream()
+  -dynamic _showUploadReceiptPage()
+  -dynamic _showEditReceiptPage()
+  -dynamic _deleteReceipt()
+  -Future<void> _updateCumulativeTotal()
+  -dynamic _successToast()
+  -dynamic _errorToast()
+  -dynamic _loadingToast()
+  -dynamic _sortByValue()
+  -dynamic _sortByDateAscending()
+  -dynamic _sortByDateDescending()
+  -Widget _getDocumentListView()
+  -dynamic _getDateUploaded()
+  -dynamic _getTimeUploaded()
+  -Future<void> _onRefresh()
+}
+
+"expense_tracker::ViewReceiptsPage.dart::_ViewUploadedReceiptsPageState" o-- "cloud_firestore::cloud_firestore.dart::CollectionReference<Map<String, dynamic>>"
+"expense_tracker::ViewReceiptsPage.dart::_ViewUploadedReceiptsPageState" o-- "dart::async::Stream<QuerySnapshot<Object>>"
+"expense_tracker::ViewReceiptsPage.dart::_ViewUploadedReceiptsPageState" o-- "flutter::src::gestures::tap.dart::TapDownDetails"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::ViewReceiptsPage.dart::_ViewUploadedReceiptsPageState"
+
+class "expense_tracker::UploadReceiptPage.dart::ReceiptUploadPage" {
+  +_ReceiptUploadPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::UploadReceiptPage.dart::ReceiptUploadPage"
+
+class "expense_tracker::UploadReceiptPage.dart::_ReceiptUploadPageState" {
+  -GlobalKey<FormState> _key
+  -File? _image
+  -double? _receiptTotal
+  -String? _comment
+  -bool _enableButton
+  -String _expenseType
+  -int _characterLimit
+  +CollectionReference<Map<String, dynamic>> dbRef
+  +Widget build()
+  +Future<void> getImage()
+  +Future<void> getCamera()
+  -Future<void> _uploadReceipt()
+  -Future<void> _updateCumulativeTotal()
+  -dynamic _validateTotal()
+  -dynamic _validateImage()
+  -dynamic _validateComment()
+  -Future<File?> _compressImage()
+  -dynamic _stripImage()
+  -dynamic _uploadFail()
+  -dynamic _uploadSuccess()
+  -dynamic _uploadWait()
+  -dynamic _successToast()
+  -dynamic _errorToast()
+  -dynamic _galleryDeniedToast()
+  -dynamic _loadingToast()
+}
+
+"expense_tracker::UploadReceiptPage.dart::_ReceiptUploadPageState" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
+"expense_tracker::UploadReceiptPage.dart::_ReceiptUploadPageState" o-- "dart::io::File"
+"expense_tracker::UploadReceiptPage.dart::_ReceiptUploadPageState" o-- "cloud_firestore::cloud_firestore.dart::CollectionReference<Map<String, dynamic>>"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::UploadReceiptPage.dart::_ReceiptUploadPageState"
+
+class "expense_tracker::addUserPage.dart::AddUserPage" {
+  +_AddUserPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::addUserPage.dart::AddUserPage"
+
+class "expense_tracker::addUserPage.dart::_AddUserPageState" {
+  -GlobalKey<FormState> _key
+  -String? _name
+  -String _phoneNumber
+  -String? _password
+  -bool? _isManager
+  +int? selectedItem
+  +Widget build()
+  +Widget phoneNumberField()
+  -dynamic _nameValidator()
+  -dynamic _phoneNumberValidator()
+  -dynamic _passwordValidator()
+  -dynamic _confirmPasswordValidator()
+  -Future<void> _createUser()
+  -dynamic _successToast()
+  -dynamic _passwordtooShortToast()
+  -dynamic _userAlreadyExists()
+  -dynamic _loadingToast()
+  -dynamic _errorToast()
+}
+
+"expense_tracker::addUserPage.dart::_AddUserPageState" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::addUserPage.dart::_AddUserPageState"
+
+class "expense_tracker::MyExpensesPage.dart::MyExpensesPage" {
+  +_MyExpensesPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::MyExpensesPage.dart::MyExpensesPage"
+
+class "expense_tracker::MyExpensesPage.dart::_MyExpensesPageState" {
+  +Widget build()
+  -ListView _getChartListView()
+  -Future<Map<String, dynamic>> _getChartData()
+  -Future<void> _onRefresh()
+}
+
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::MyExpensesPage.dart::_MyExpensesPageState"
+
+class "expense_tracker::EditUserPage.dart::EditUserPage" {
+  +Map<String, dynamic> userData
+  +_EditUserPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::EditUserPage.dart::EditUserPage"
+
+class "expense_tracker::EditUserPage.dart::_EditUserPageState" {
+  -GlobalKey<FormState> _key
+  -String _password
+  -String? _name
+  -String? _oldphoneNumber
+  -String? _newphoneNumber
+  +int? selectedItem
+  -bool? _isManager
+  +void initState()
+  +Widget build()
+  +Widget phoneNumberField()
+  -dynamic _phoneNumberValidator()
+  -dynamic _passwordValidator()
+  -dynamic _confirmPasswordValidator()
+  -dynamic _nameValidator()
+  -dynamic _successToast()
+  -dynamic _passwordtooShortToast()
+  -dynamic _userAlreadyExistsToast()
+  -dynamic _errorToast()
+  -dynamic _loadingToast()
+  -Future<void> _updateUser()
+}
+
+"expense_tracker::EditUserPage.dart::_EditUserPageState" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::EditUserPage.dart::_EditUserPageState"
+
+class "expense_tracker::UserDetailsPage.dart::UserDetailsPage" {
+  +Map<String, dynamic> userData
+  +String? userDocumentID
+  +_UserDetailsPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::UserDetailsPage.dart::UserDetailsPage"
+
+class "expense_tracker::UserDetailsPage.dart::_UserDetailsPageState" {
+  -String _name
+  -double? _total
+  -int? _receiptsUploaded
+  -String? _phoneNumber
+  -String? _userDocumentID
+  +void initState()
+  +Widget build()
+  -Future<void> _onRefresh()
+  -dynamic _getChartListView()
+  -void _viewUserReceiptsPage()
+  -void _viewUserArchivedReceiptsPage()
+  -Future<Map<String, dynamic>> _getChartData()
+}
+
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::UserDetailsPage.dart::_UserDetailsPageState"
+
+class "expense_tracker::ManagerNavigationPage.dart::ManagerNavigationPage" {
+  +_ManagerNavigationPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::ManagerNavigationPage.dart::ManagerNavigationPage"
+
+class "expense_tracker::ManagerNavigationPage.dart::_ManagerNavigationPageState" {
+  -int _selectedIndex
+  {static} -List<Widget> _managerPages
+  -void _onBarTap()
+  +Widget build()
+}
+
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::ManagerNavigationPage.dart::_ManagerNavigationPageState"
+
+class "expense_tracker::EditReceiptPage.dart::EditReceiptPage" {
+  +Map<String, dynamic> receiptData
+  +dynamic receiptID
+  +_EditReceiptPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::EditReceiptPage.dart::EditReceiptPage"
+
+class "expense_tracker::EditReceiptPage.dart::_EditReceiptPageState" {
+  -GlobalKey<FormState> _key
+  -String? _initialTotal
+  -double? _total
+  -String? _encodedImage
+  -File? _image
+  -String? _comment
+  -String? _expenseType
+  -bool _enableButton
+  -int _characterLimit
+  -String? _receiptID
+  +CollectionReference<Map<String, dynamic>> dbRef
+  +void initState()
+  +Widget build()
+  +Future<dynamic> getImage()
+  +Future<dynamic> getCamera()
+  -Future<void> _updateReceipt()
+  -Future<void> _updateCumulativeTotal()
+  -dynamic _validateTotal()
+  -dynamic _validateComment()
+  -Future<File?> _compressImage()
+  -dynamic _stripImage()
+  -dynamic _uploadFail()
+  -dynamic _uploadSuccess()
+  -dynamic _uploadWait()
+  -dynamic _successToast()
+  -dynamic _errorToast()
+  -dynamic _cameraErrorToast()
+  -dynamic _galleryErrorToast()
+  -dynamic _loadingToast()
+}
+
+"expense_tracker::EditReceiptPage.dart::_EditReceiptPageState" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
+"expense_tracker::EditReceiptPage.dart::_EditReceiptPageState" o-- "dart::io::File"
+"expense_tracker::EditReceiptPage.dart::_EditReceiptPageState" o-- "cloud_firestore::cloud_firestore.dart::CollectionReference<Map<String, dynamic>>"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::EditReceiptPage.dart::_EditReceiptPageState"
+
+class "expense_tracker::SettingsPage.dart::SettingsPage" {
+  +_SettingsPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::SettingsPage.dart::SettingsPage"
+
+class "expense_tracker::SettingsPage.dart::_SettingsPageState" {
+  +Widget build()
+  -Future<DocumentSnapshot<Object?>> _getUserDoc()
+  -void _logOut()
+  -dynamic _switchLanguage()
+}
+
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::SettingsPage.dart::_SettingsPageState"
+
+class "expense_tracker::ViewArchivedReceiptsPage.dart::ViewArchivedReceiptsPage" {
+  +DateTime selectedDay
+  +dynamic userID
+  +_ViewArchivedReceiptsPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::ViewArchivedReceiptsPage.dart::ViewArchivedReceiptsPage"
+
+class "expense_tracker::ViewArchivedReceiptsPage.dart::_ViewArchivedReceiptsPageState" {
+  -DateTime? _selectedDay
+  -String? _userID
+  +void initState()
+  +Widget build()
+  -dynamic _getDocumentListView()
+  -dynamic _getDateUploaded()
+  -dynamic _getTimeUploaded()
+  -Stream<QuerySnapshot<Object?>> _getArchivedReceipts()
+  -Future<void> _onRefresh()
+}
+
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::ViewArchivedReceiptsPage.dart::_ViewArchivedReceiptsPageState"
+
+class "expense_tracker::ExpensesOverviewPage.dart::ExpensesOverviewPage" {
+  +_UserTotalPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::ExpensesOverviewPage.dart::ExpensesOverviewPage"
+
+class "expense_tracker::ExpensesOverviewPage.dart::_UserTotalPageState" {
+  +Widget build()
+  -Widget _getExpensesListView()
+  -Future<void> _onRefresh()
+}
+
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::ExpensesOverviewPage.dart::_UserTotalPageState"
+
+class "expense_tracker::User.dart::User" {
+  +String? name
+  +String? password
+  +String? email
+  +String? oldEmail
+  +bool? isManager
+  +String? phoneNumber
+  +dynamic toJson()
+  -Future<Map<String, dynamic>> _serializeToJson()
+}
+
+class "expense_tracker::EmployeeUploadedReceiptsPage.dart::EmployeeUploadedReceiptsPage" {
+  +String? name
+  +String? userID
+  +_EmployeeUploadedReceiptsPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::EmployeeUploadedReceiptsPage.dart::EmployeeUploadedReceiptsPage"
+
+class "expense_tracker::EmployeeUploadedReceiptsPage.dart::_EmployeeUploadedReceiptsPageState" {
+  -String? _phoneNumber
+  -String? _name
+  -Stream<QuerySnapshot<Object?>> _receiptStream
+  +bool isLoading
+  -String? _userID
+  +void initState()
+  +Widget build()
+  -Widget _getDocumentListView()
+  -dynamic _getDateUploaded()
+  -dynamic _getTimeUploaded()
+  -dynamic _sortByValue()
+  -dynamic _sortByDateAscending()
+  -dynamic _sortByDateDescending()
+  -Stream<QuerySnapshot<Object?>> _getReceiptStream()
+  -Stream<QuerySnapshot<Object?>> _getReceiptStreamByValue()
+  -Stream<QuerySnapshot<Object?>> _getReceiptStreamByDateAscending()
+  -Stream<QuerySnapshot<Object?>> _getReceiptStreamByDateDescending()
+}
+
+"expense_tracker::EmployeeUploadedReceiptsPage.dart::_EmployeeUploadedReceiptsPageState" o-- "dart::async::Stream<QuerySnapshot<Object>>"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::EmployeeUploadedReceiptsPage.dart::_EmployeeUploadedReceiptsPageState"
+
+abstract class "expense_tracker::Global.dart::Global" {
+  {static} +Color colorBlue
+  {static} +int phoneNumberLength
+  {static} +MaskedInputFormatter phoneInputFormatter
+  {static} +PosInputFormatter moneyInputFormatter
+  {static} +double? defaultRadius
+  {static} +int imageCompression
+  {static} +int imageQuality
+  {static} +SizedBox defaultIconSpacing
+  {static} +Map<String, Widget> pages
+  {static} +ButtonStyle defaultButtonStyle
+  {static} +FirebaseAuth auth
+}
+
+"expense_tracker::Global.dart::Global" o-- "dart::ui::Color"
+"expense_tracker::Global.dart::Global" o-- "flutter_multi_formatter::formatters::masked_input_formatter.dart::MaskedInputFormatter"
+"expense_tracker::Global.dart::Global" o-- "flutter_multi_formatter::formatters::pos_input_formatter.dart::PosInputFormatter"
+"expense_tracker::Global.dart::Global" o-- "flutter::src::widgets::basic.dart::SizedBox"
+"expense_tracker::Global.dart::Global" o-- "flutter::src::material::button_style.dart::ButtonStyle"
+"expense_tracker::Global.dart::Global" o-- "firebase_auth::firebase_auth.dart::FirebaseAuth"
+
+class "expense_tracker::ArchivedReceiptDatePicker.dart::ArchivedReceiptDatePickerPage" {
+  +String? name
+  +String? userID
+  +_ArchivedReceiptDatePickerPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::ArchivedReceiptDatePicker.dart::ArchivedReceiptDatePickerPage"
+
+class "expense_tracker::ArchivedReceiptDatePicker.dart::_ArchivedReceiptDatePickerPageState" {
+  -String? _name
+  -String? _userID
+  -DateTime? _focusedDay
+  -DateTime? _selectedDay
+  -DateTime? _firstDay
+  -DateTime? _lastDay
+  -CalendarFormat _calendarFormat
+  +void initState()
+  -void _setFirstDay()
+  -void _setLastAndFocusedDay()
+  +Widget build()
+  -dynamic _viewArchivedReceipts()
+  -Future<int> _getFirstReceiptTimestamp()
+  -Future<int> _getLastReceiptTimestamp()
+}
+
+"expense_tracker::ArchivedReceiptDatePicker.dart::_ArchivedReceiptDatePickerPageState" o-- "table_calendar::src::shared::utils.dart::CalendarFormat"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::ArchivedReceiptDatePicker.dart::_ArchivedReceiptDatePickerPageState"
+
+class "expense_tracker::EmployeeNavigationPage.dart::EmployeeNavigationPage" {
+  +_EmployeeNavigationPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::EmployeeNavigationPage.dart::EmployeeNavigationPage"
+
+class "expense_tracker::EmployeeNavigationPage.dart::_EmployeeNavigationPageState" {
+  {static} -List<Widget> _employeePages
+  -int _selectedIndex
+  +Widget build()
+}
+
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::EmployeeNavigationPage.dart::_EmployeeNavigationPageState"
+
+class "expense_tracker::ChartData.dart::ChartData" {
+  +String x
+  +double y
+  +Color color
+}
+
+"expense_tracker::ChartData.dart::ChartData" o-- "dart::ui::Color"
+
+abstract class "expense_tracker::Receipt.dart::ExpenseType" {
+  {static} +String travel
+  {static} +String food
+  {static} +String other
+  {static} +String tools
+}
+
+class "expense_tracker::Receipt.dart::Receipt" {
+  +double? total
+  +File? image
+  +String? comment
+  +String? expenseType
+  +dynamic toJson()
+  -Map<String, dynamic> _serializeToJson()
+}
+
+"expense_tracker::Receipt.dart::Receipt" o-- "dart::io::File"
+
+class "expense_tracker::ViewUsersPage.dart::ViewUserPage" {
+  +_ViewUserPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::ViewUsersPage.dart::ViewUserPage"
+
+class "expense_tracker::ViewUsersPage.dart::_ViewUserPageState" {
+  -Stream<QuerySnapshot<Map<String, dynamic>>> _userStream
+  +int? selected
+  +String? userDocumentID
+  -TapDownDetails _tapDownDetails
+  +Widget build()
+  -Widget _getUserListView()
+  -dynamic _showEditUserPage()
+  -Future<void> _deleteUser()
+  -dynamic _loadingToast()
+  -dynamic _deleteSelfToast()
+  -dynamic _successToast()
+  -dynamic _showAddUserPage()
+  -dynamic _viewUserDetailsPage()
+  -dynamic _getStream()
+  -Future<void> _onRefresh()
+}
+
+"expense_tracker::ViewUsersPage.dart::_ViewUserPageState" o-- "dart::async::Stream<QuerySnapshot<Map<String, dynamic>>>"
+"expense_tracker::ViewUsersPage.dart::_ViewUserPageState" o-- "flutter::src::gestures::tap.dart::TapDownDetails"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::ViewUsersPage.dart::_ViewUserPageState"
+
+class "expense_tracker::NewUserPasswordChangePage.dart::NewUserPasswordChangePage" {
+  +_NewUserPasswordChangePageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::NewUserPasswordChangePage.dart::NewUserPasswordChangePage"
+
+class "expense_tracker::NewUserPasswordChangePage.dart::_NewUserPasswordChangePageState" {
+  +Widget build()
+}
+
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::NewUserPasswordChangePage.dart::_NewUserPasswordChangePageState"
+
+class "expense_tracker::LoginPage.dart::ExpenseTracker" {
+  +Widget build()
+}
+
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "expense_tracker::LoginPage.dart::ExpenseTracker"
+
+class "expense_tracker::LoginPage.dart::LoginPage" {
+  +_LoginPageState createState()
+}
+
+"flutter::src::widgets::framework.dart::StatefulWidget" <|-- "expense_tracker::LoginPage.dart::LoginPage"
+
+class "expense_tracker::LoginPage.dart::_LoginPageState" {
+  -GlobalKey<FormState> _key
+  -String _phoneNumber
+  -String _password
+  -bool _visPass
+  -bool? _userNotFound
+  -bool? _wrongPassword
+  -bool? _tooManyRequests
+  -TextEditingController _phoneTextFieldController
+  -TextEditingController _passwordTextFieldController
+  -dynamic _submitForm()
+  +Widget build()
+  +Widget phoneNumberField()
+  +Widget passwordField()
+  +Widget loginButton()
+  -dynamic _forgotPassword()
+  +dynamic changeLang()
+  -dynamic _passwordValidator()
+  -dynamic _phoneNumberValidator()
+  -dynamic _showUserFunctionPage()
+  -dynamic _showChangePasswordPage()
+}
+
+"expense_tracker::LoginPage.dart::_LoginPageState" o-- "flutter::src::widgets::framework.dart::GlobalKey<FormState>"
+"expense_tracker::LoginPage.dart::_LoginPageState" o-- "flutter::src::widgets::editable_text.dart::TextEditingController"
+"flutter::src::widgets::framework.dart::State" <|-- "expense_tracker::LoginPage.dart::_LoginPageState"
+
+class "expense_tracker::firebase_options.dart::DefaultFirebaseOptions" {
+  {static} +FirebaseOptions android
+  {static} +FirebaseOptions ios
+  {static} +FirebaseOptions currentPlatform
+}
+
+"expense_tracker::firebase_options.dart::DefaultFirebaseOptions" o-- "firebase_core_platform_interface::firebase_core_platform_interface.dart::FirebaseOptions"
+
+
+@enduml

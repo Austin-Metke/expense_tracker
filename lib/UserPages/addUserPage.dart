@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:oktoast/oktoast.dart';
-import 'Global.dart';
-import 'User.dart';
+import '../FirebaseOperations/CloudFunctionActions.dart';
+import '../Global.dart';
+import '../DataTypes/User.dart';
 
 class AddUserPage extends StatefulWidget {
   const AddUserPage({Key? key}) : super(key: key);
@@ -181,24 +182,20 @@ class _AddUserPageState extends State<AddUserPage> {
   }
 
   Future<void> _createUser() async {
+
     _loadingToast();
 
-    User user = User(
+    String? functionStatus = await CloudFunctionActions.createUser(user:User(
         name: _name,
         isManager: _isManager,
         email: '$_phoneNumber@fakeemail.com',
         phoneNumber: _phoneNumber,
-        password: _password);
+        password: _password));
 
-    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
-        .httpsCallable('makeUser');
-    final resp = await callable.call(await user.toJson());
 
-    print("RESPONSE: ${resp.data}");
-
-    switch (resp.data) {
+    switch (functionStatus) {
       case 'auth/email-already-exists':
-        _userAlreadyExists();
+        _userAlreadyExistsToast();
         break;
 
       case 'auth/invalid-password':
@@ -242,7 +239,7 @@ class _AddUserPageState extends State<AddUserPage> {
     );
   }
 
-  _userAlreadyExists() {
+  _userAlreadyExistsToast() {
     showToast(
       'A user with that phone number already exists',
       position: ToastPosition.bottom,

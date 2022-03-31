@@ -4,9 +4,12 @@ import 'package:expense_tracker/Global.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../CustomWidgets/ReceiptWidget.dart';
+
 class EmployeeUploadedReceiptsPage extends StatefulWidget {
   final String? name;
   final String? userID;
+
   const EmployeeUploadedReceiptsPage(
       {Key? key, required this.name, required this.userID})
       : super(key: key);
@@ -18,7 +21,6 @@ class EmployeeUploadedReceiptsPage extends StatefulWidget {
 
 class _EmployeeUploadedReceiptsPageState
     extends State<EmployeeUploadedReceiptsPage> {
-  late String? _phoneNumber;
   late String? _name;
   late Stream<QuerySnapshot> _receiptStream;
   late bool isLoading;
@@ -29,7 +31,7 @@ class _EmployeeUploadedReceiptsPageState
   initState() {
     isLoading = true;
     super.initState();
-    _userID =  widget.userID;
+    _userID = widget.userID;
     _name = widget.name;
     _receiptStream = _getReceiptStream();
   }
@@ -93,44 +95,21 @@ class _EmployeeUploadedReceiptsPageState
         var comment = receiptData['comment'];
         var date = receiptData['date'];
         var image = base64Decode(receiptData['image']);
-
+        var expenseType = receiptData['expenseType'];
         return InkWell(
-          child: Container(
-              margin: const EdgeInsets.all(10),
-              color: const Color.fromARGB(100, 121, 121, 121),
-              child: Column(children: [
-                Image.memory(image),
-
-                Text(
-                  "Total: ${NumberFormat.simpleCurrency().format(total)}",
-                  style: const TextStyle(
-                    fontSize: 18,
-                  ),
-                ),
-
-                Text(
-                    "Comment: ${(comment != null || comment == "" ? comment : "none")}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                    )),
-
-                //Ternary operation to ensure build() doesn't break on the offchance an upload date isn't stored
-                Text(
-                    "Uploaded on: ${(date is int ? "${_getDateUploaded(date)} at ${_getTimeUploaded(date)}" : "Unknown")}")
-              ])),
-        );
+            child: Container(
+          padding: const EdgeInsets.all(10),
+          child: ReceiptWidget(
+            total: total,
+            image: image,
+            expenseType: expenseType,
+            date: date,
+            comment: comment,
+            backgroundColor: Colors.black26,
+          ),
+        ));
       }).toList(),
     );
-  }
-
-  _getDateUploaded(int time) {
-    return DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY)
-        .format(DateTime.fromMicrosecondsSinceEpoch(time));
-  }
-
-  _getTimeUploaded(int time) {
-    return DateFormat(DateFormat.HOUR_MINUTE)
-        .format(DateTime.fromMicrosecondsSinceEpoch(time));
   }
 
   _sortByValue() async {
@@ -152,8 +131,6 @@ class _EmployeeUploadedReceiptsPageState
   }
 
   Stream<QuerySnapshot> _getReceiptStreamByValue() async* {
-
-
     yield* FirebaseFirestore.instance
         .collection("users/$_userID/receipts")
         .orderBy('total', descending: true)
@@ -168,7 +145,6 @@ class _EmployeeUploadedReceiptsPageState
   }
 
   Stream<QuerySnapshot> _getReceiptStreamByDateDescending() async* {
-
     yield* FirebaseFirestore.instance
         .collection("users/$_userID/receipts")
         .orderBy('date', descending: false)

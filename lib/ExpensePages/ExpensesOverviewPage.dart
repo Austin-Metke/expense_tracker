@@ -1,9 +1,9 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'ChartData.dart';
-import 'Global.dart';
-import 'Receipt.dart';
+import '../DataTypes/ChartData.dart';
+import '../Global.dart';
+import '../DataTypes/Receipt.dart';
 
 class ExpensesOverviewPage extends StatefulWidget {
   const ExpensesOverviewPage({Key? key}) : super(key: key);

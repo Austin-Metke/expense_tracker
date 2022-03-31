@@ -1,50 +1,31 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:expense_tracker/FirebaseOperations/FirestoreActions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:oktoast/oktoast.dart';
-import 'Global.dart';
-import 'Receipt.dart';
+import '../Global.dart';
+import '../DataTypes/Receipt.dart';
 
-class EditReceiptPage extends StatefulWidget {
-  final Map<String, dynamic> receiptData;
-  final receiptID;
-
-  const EditReceiptPage({Key? key, required this.receiptData, this.receiptID})
-      : super(key: key);
+class ReceiptUploadPage extends StatefulWidget {
+  const ReceiptUploadPage({Key? key}) : super(key: key);
 
   @override
-  _EditReceiptPageState createState() => _EditReceiptPageState();
+  _ReceiptUploadPageState createState() => _ReceiptUploadPageState();
 }
 
-class _EditReceiptPageState extends State<EditReceiptPage> {
+class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
   final _key = GlobalKey<FormState>();
-
-  String? _initialTotal;
-  double? _total;
-  String? _encodedImage;
   File? _image;
+  double? _receiptTotal;
   String? _comment;
-  String? _expenseType;
   var _enableButton = true;
+  String _expenseType = ExpenseType.travel;
   final _characterLimit = 300;
-  late final String? _receiptID;
   final dbRef = FirebaseFirestore.instance.collection('users');
-
-  @override
-  void initState() {
-    super.initState();
-    _initialTotal = (widget.receiptData['total'] / 100).toStringAsFixed(2);
-    _total = widget.receiptData['total'];
-    _comment = widget.receiptData['comment'];
-    _encodedImage = widget.receiptData['image'];
-    _receiptID = widget.receiptID;
-    _expenseType = widget.receiptData['expenseType'];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +35,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
           appBar: AppBar(
             backgroundColor: Global.colorBlue,
             centerTitle: true,
-            title: const Text("Edit receipt"),
+            title: const Text("Upload Receipt"),
           ),
           resizeToAvoidBottomInset: true,
           body: SingleChildScrollView(
@@ -66,21 +47,26 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: Container(
-                        child: _image == null
-                            ? Image.memory(
-                                base64Decode(_encodedImage!),
-                                filterQuality: FilterQuality.medium,
-                                width: 150,
-                                height: 150,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.file(
-                                _image!,
-                                filterQuality: FilterQuality.medium,
-                                width: 150,
-                                height: 150,
-                                fit: BoxFit.cover,
-                              )),
+                      child: _validateImage(_image)
+                          ? Image.file(
+                              _image!,
+                              filterQuality: FilterQuality.medium,
+                              width: 150,
+                              height: 150,
+                              fit: BoxFit.cover,
+                            )
+                          : Container(
+                              width: 150,
+                              height: 150,
+                              color: Colors.black12,
+                              child: const Center(
+                                child: Text(
+                                  "Please Select image",
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            ),
+                    ),
                   ),
                   //***********************
 
@@ -89,71 +75,58 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                     padding: const EdgeInsets.all(10),
                     child: FittedBox(
                       child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            TextButton(
-                              style: Global.defaultButtonStyle,
-                              child: FittedBox(
-                                  child: Row(
-                                children: <Widget>[
-                                  Icon(
-                                    Icons.photo_library_outlined,
-                                    size: MediaQuery.of(context).size.width *
-                                        0.050,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          TextButton(
+                            style: Global.defaultButtonStyle,
+                            child: Row(
+                              children: <Widget>[
+                                const Icon(
+                                  Icons.photo_library_outlined,
+                                ),
+                                Global.defaultIconSpacing,
+                                Text(
+                                  "Pick image from gallery",
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.035,
                                   ),
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.0150,
+                                ),
+                              ],
+                            ),
+                            onPressed: () => getImage(),
+                          ),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.0150,
+                          ),
+                          TextButton(
+                            style: Global.defaultButtonStyle,
+                            onPressed: () => getCamera(),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(
+                                  Icons.camera_alt,
+                                  size:
+                                      MediaQuery.of(context).size.width * 0.050,
+                                ),
+                                Global.defaultIconSpacing,
+                                Text(
+                                  "Take picture of receipt",
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.035,
                                   ),
-                                  Text(
-                                    "Pick image from gallery",
-                                    style: TextStyle(
-                                      fontSize:
-                                          MediaQuery.of(context).size.width *
-                                              0.035,
-                                    ),
-                                  ),
-                                ],
-                              )),
-                              onPressed: () => getImage(),
+                                ),
+                              ],
                             ),
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.0150,
-                            ),
-                            TextButton(
-                              style: Global.defaultButtonStyle,
-                              onPressed: () => getCamera(),
-                              child: FittedBox(
-                                child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget>[
-                                      Icon(
-                                        Icons.camera_alt,
-                                        size:
-                                            MediaQuery.of(context).size.width *
-                                                0.050,
-                                      ),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.0150,
-                                      ),
-                                      Text(
-                                        "Take picture of receipt",
-                                        style: TextStyle(
-                                          fontSize: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.035,
-                                        ),
-                                      ),
-                                    ]),
-                              ),
-                            ),
-                          ]),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -161,22 +134,26 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: TextFormField(
-                      initialValue: _initialTotal,
                       decoration: const InputDecoration(
                         labelText: "Receipt Total",
+                        hintText: "0.00",
                         prefixText: "\$ ",
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                       ),
+                      initialValue: "0.00",
                       showCursor: true,
                       keyboardType: TextInputType.number,
-                      onChanged: (value) => _total = double.parse(
+                      onChanged: (value) => _receiptTotal = double.tryParse(
                           toNumericString(value,
-                              allowHyphen: false, allowPeriod: false)),
+                              allowPeriod: false, allowHyphen: false)),
                       onFieldSubmitted: (value) =>
                           _key.currentState?.validate(),
-                      validator: (value) => _validateTotal(value),
+                      validator: (value) => _validateTotal(toNumericString(
+                          value,
+                          allowHyphen: false,
+                          allowPeriod: false)),
                       inputFormatters: [Global.moneyInputFormatter],
                     ),
                   ),
@@ -186,7 +163,6 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: TextFormField(
-                      initialValue: _comment,
                       decoration: const InputDecoration(
                         labelText: "Comment",
                         hintText: "Add a comment (optional)",
@@ -204,27 +180,31 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                   //**********************************
 
                   //**********ExpenseTypeDrownDownMenu*********
+
                   DropdownButton<String>(
                       value: _expenseType,
+                      hint: const Text("Expense Type"),
                       items: const [
                         DropdownMenuItem<String>(
-                          child: Text(ExpenseType.travel),
+                          child: Text("Travel"),
                           value: ExpenseType.travel,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text(ExpenseType.food),
+                          child: Text("Food"),
                           value: ExpenseType.food,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text(ExpenseType.tools),
+                          child: Text("Tools"),
                           value: ExpenseType.tools,
                         ),
                         DropdownMenuItem<String>(
-                          child: Text(ExpenseType.other),
+                          child: Text("Other"),
                           value: ExpenseType.other,
                         ),
                       ],
-                      onChanged: (value) => setState(() => _expenseType = value)),
+                      onChanged: (value) =>
+                          setState(() => _expenseType = value!)),
+
                   //**********************************
 
                   //************UploadButton**********
@@ -240,7 +220,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                                     MediaQuery.of(context).size.width * 0.035)),
                         //Ternary operation to ensure _uploadReceipt() isn't called during an upload
                         onPressed: () =>
-                            _enableButton ? _updateReceipt() : null,
+                            _enableButton ? _uploadReceipt() : null,
                       ),
                     ),
                   ),
@@ -252,7 +232,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
         ));
   }
 
-  Future getImage() async {
+  Future<void> getImage() async {
     try {
       final image = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (image == null) return;
@@ -263,11 +243,11 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
 
       setState(() => _image = strippedImage);
     } on PlatformException catch (e) {
-      _galleryErrorToast();
+      print("Access to gallery was denied $e");
     }
   }
 
-  Future getCamera() async {
+  Future<void> getCamera() async {
     try {
       final image = await ImagePicker().pickImage(source: ImageSource.camera);
       if (image == null) return;
@@ -278,55 +258,41 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
 
       setState(() => _image = strippedImage);
     } on PlatformException catch (e) {
-      _cameraErrorToast();
+      _galleryDeniedToast();
     }
   }
 
-  Future<void> _updateReceipt() async {
-    _uploadWait();
-
-    Receipt receipt = (_image == null)
-        ? Receipt(total: _total, comment: _comment, expenseType: _expenseType)
-        : Receipt(
-            total: _total,
-            comment: _comment,
-            image: _image,
-            expenseType: _expenseType);
-
-    await FirebaseFirestore.instance
-        .doc("users/${Global.auth.currentUser!.uid}/receipts/$_receiptID")
-        .update(receipt.toJson())
-        .then((value) => {_uploadSuccess(), _updateCumulativeTotal()})
-        .onError((error, stackTrace) => _uploadFail());
-  }
-
-  Future<void> _updateCumulativeTotal() async {
-    double total = 0;
-
-    final receiptCollectionReference =
-        dbRef.doc(Global.auth.currentUser?.uid).collection('receipts');
-
-    final receiptQuerySnapshot = await receiptCollectionReference.get();
-
-    for (var receiptDocument in receiptQuerySnapshot.docs) {
-      var tempTotal = double.parse(receiptDocument.get('total').toString());
-      total += tempTotal;
+  Future<void> _uploadReceipt() async {
+    final formState = _key.currentState;
+    if (formState!.validate() && _validateImage(_image)) {
+      _uploadWait();
+      try {
+        await FirestoreActions.uploadReceipt(
+          receipt: Receipt(
+              image: _image,
+              total: _receiptTotal,
+              comment: _comment,
+              expenseType: _expenseType),
+        );
+        _uploadSuccess();
+      } catch (e) {
+        _uploadFail();
+      }
     }
-
-    await dbRef.doc(Global.auth.currentUser?.uid).update(<String, dynamic>{
-      'total': double.parse(total.toStringAsFixed(2)),
-      'uploadedReceipts': receiptQuerySnapshot.docs.length,
-    });
   }
 
   _validateTotal(String? value) {
-    if (value!.isEmpty ||
-        _total!.isNaN ||
-        double.parse(toNumericString(value)) == 0) {
+    if (value!.isEmpty || _receiptTotal!.isNaN || double.parse(value) == 0) {
       return 'Please enter a total for your receipt';
     }
-
     return null;
+  }
+
+  _validateImage(File? value) {
+    if (value == null) {
+      return false;
+    }
+    return true;
   }
 
   _validateComment(String? value) {
@@ -349,10 +315,10 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
     return compressedImage;
   }
 
-  _stripImage(File? image) async {
+  _stripImage(File? image) {
     var compressImage = _compressImage(image);
 
-    //TODO Create a function that makes image grayscale
+    //TODO Create method to make image monochrome
 
     return compressImage;
   }
@@ -377,7 +343,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
       'Upload complete!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
@@ -391,20 +357,6 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
       'Upload failed!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
-      radius: 10.0,
-      textStyle: TextStyle(
-          fontSize: MediaQuery.of(context).size.width * 0.040,
-          color: Colors.white),
-      dismissOtherToast: true,
-      textAlign: TextAlign.center,
-    );
-  }
-
-  _cameraErrorToast() {
-    showToast(
-      'Access to camera was denied!',
-      position: ToastPosition.bottom,
-      backgroundColor: Colors.red,
       radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.040,
@@ -414,9 +366,9 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
     );
   }
 
-  _galleryErrorToast() {
+  _galleryDeniedToast() {
     showToast(
-      'Access to gallery was denied!',
+      'Unable to access gallery!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
       radius: Global.defaultRadius,

@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_tracker/Global.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import 'ViewArchivedReceiptsPage.dart';
@@ -61,7 +59,7 @@ class _ArchivedReceiptDatePickerPageState
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(" $_name Archived receipts"),
+        title: const Text("Pick A Week"),
         backgroundColor: Global.colorBlue,
       ),
 
@@ -94,7 +92,7 @@ class _ArchivedReceiptDatePickerPageState
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => ViewArchivedReceiptsPage(selectedDay: selectedDay, userID: _userID,)));
+            builder: (context) => ViewArchivedReceiptsPage(selectedDay: selectedDay, userID: _userID, name: _name)));
 
   }
 

@@ -101,12 +101,12 @@ class _AddUserPageState extends State<AddUserPage> {
                         items: [
                           DropdownMenuItem(
                             value: 0,
-                            child: Text("Employee"),
+                            child: const Text("Employee"),
                             onTap: () => {_isManager = false},
                           ),
                           DropdownMenuItem(
                             value: 1,
-                            child: Text("Manager"),
+                            child: const Text("Manager"),
                             onTap: () => {_isManager = true},
                           ),
                         ],

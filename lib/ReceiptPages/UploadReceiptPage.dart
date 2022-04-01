@@ -43,7 +43,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
               key: _key,
               child: Column(
                 children: <Widget>[
-                  //*************Image*************
+                  //*************Image*******************
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: Container(
@@ -68,7 +68,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                             ),
                     ),
                   ),
-                  //***********************
+                  //**************************************
 
                   //*************ImageButtons*************
                   Padding(
@@ -129,6 +129,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                       ),
                     ),
                   ),
+                  //************************************
 
                   //************TotalFormField***********
                   Padding(
@@ -242,9 +243,10 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       var strippedImage = await _stripImage(imageAsFile);
 
       setState(() => _image = strippedImage);
-    } on PlatformException catch (e) {
-      print("Access to gallery was denied $e");
+    } on PlatformException {
+      _cameraDeniedToast();
     }
+
   }
 
   Future<void> getCamera() async {
@@ -257,7 +259,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       var strippedImage = await _stripImage(imageAsFile);
 
       setState(() => _image = strippedImage);
-    } on PlatformException catch (e) {
+    } on PlatformException {
       _galleryDeniedToast();
     }
   }
@@ -369,6 +371,20 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
   _galleryDeniedToast() {
     showToast(
       'Unable to access gallery!',
+      position: ToastPosition.bottom,
+      backgroundColor: Colors.red,
+      radius: Global.defaultRadius,
+      textStyle: TextStyle(
+          fontSize: MediaQuery.of(context).size.width * 0.040,
+          color: Colors.white),
+      dismissOtherToast: true,
+      textAlign: TextAlign.center,
+    );
+  }
+
+  _cameraDeniedToast() {
+    showToast(
+      'Unable to access camera!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
       radius: Global.defaultRadius,

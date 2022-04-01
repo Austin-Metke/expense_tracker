@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:expense_tracker/Global.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:table_calendar/table_calendar.dart';
+
+import '../Global.dart';
 
 class ViewArchivedReceiptsPage extends StatefulWidget {
   final DateTime selectedDay;
   final String? userID;
-  const ViewArchivedReceiptsPage({Key? key, required this.selectedDay, required this.userID}) : super(key: key);
+  final String? name;
+  const ViewArchivedReceiptsPage({Key? key, required this.selectedDay, required this.userID, required this.name}) : super(key: key);
 
   @override
   _ViewArchivedReceiptsPageState createState() => _ViewArchivedReceiptsPageState();
@@ -19,6 +20,7 @@ class _ViewArchivedReceiptsPageState extends State<ViewArchivedReceiptsPage> {
 
   late final DateTime? _selectedDay;
   late final String? _userID;
+  late final String? _name;
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _ViewArchivedReceiptsPageState extends State<ViewArchivedReceiptsPage> {
 
     _selectedDay = widget.selectedDay;
     _userID = widget.userID;
+    _name = widget.name;
   }
 
 
@@ -35,7 +38,10 @@ class _ViewArchivedReceiptsPageState extends State<ViewArchivedReceiptsPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text("Archived Receipts"),
+        title: Text("$_name Receipts For Week Of ${DateFormat(DateFormat.ABBR_MONTH_DAY)
+            .format(_selectedDay!)}"),
+        titleSpacing: .5,
+        backgroundColor: Global.colorBlue,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _getArchivedReceipts(),
@@ -47,6 +53,7 @@ class _ViewArchivedReceiptsPageState extends State<ViewArchivedReceiptsPage> {
             print(snapshot.error);
             return const Center(child: Text("An error occurred!"));
           } else {
+
 
             return RefreshIndicator(child: _getDocumentListView(snapshot), onRefresh: _onRefresh);
 
@@ -111,18 +118,17 @@ class _ViewArchivedReceiptsPageState extends State<ViewArchivedReceiptsPage> {
 
   Stream<QuerySnapshot> _getArchivedReceipts() async* {
 
-    DateTime sunday = _selectedDay!;
-    DateTime saturday = _selectedDay!;
-    while(sunday.weekday != DateTime.sunday) {
-      sunday = sunday.subtract(const Duration(days: 1));
-      print("Sunday microseconds: ${sunday.microsecondsSinceEpoch}");
+    DateTime firstDayOfWeek = _selectedDay!;
+    DateTime lastDayOfWeek = _selectedDay!;
+    while(firstDayOfWeek.weekday != DateTime.sunday) {
+      firstDayOfWeek = firstDayOfWeek.subtract(const Duration(days: 1));
     }
 
-    while(saturday.weekday != DateTime.saturday) {
-      saturday = saturday.add(const Duration(days: 1));
+    while(lastDayOfWeek.weekday != DateTime.saturday) {
+      lastDayOfWeek = lastDayOfWeek.add(const Duration(days: 1));
     }
 
-    yield* FirebaseFirestore.instance.collection('archivedReceipts/$_userID/receipts').where('date', isGreaterThanOrEqualTo: sunday.microsecondsSinceEpoch, isLessThanOrEqualTo: saturday.microsecondsSinceEpoch).snapshots();
+    yield* FirebaseFirestore.instance.collection('archivedReceipts/$_userID/receipts').where('date', isGreaterThanOrEqualTo: firstDayOfWeek.microsecondsSinceEpoch, isLessThanOrEqualTo: lastDayOfWeek.microsecondsSinceEpoch).snapshots();
 
   }
 

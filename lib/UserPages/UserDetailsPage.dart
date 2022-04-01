@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_tracker/ReceiptPages/EmployeeUploadedReceiptsPage.dart';
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import '../DataTypes/ChartData.dart';
 import '../ReceiptPages/ArchivedReceiptDatePicker.dart';
 import '../Global.dart';
@@ -49,14 +48,26 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
             PopupMenuButton<int>(
               itemBuilder: (context) {
                 return [
-                  const PopupMenuItem<int>(
+                  PopupMenuItem<int>(
                     value: 0,
-                    child: Text("View receipts"),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.pages, color: Colors.black38),
+                    Global.defaultIconSpacing,
+                    Text("View receipts"),
+                      ],
+                    ),
                   ),
 
-                  const PopupMenuItem(
+                   PopupMenuItem(
                     value: 1,
-                    child: Text("View archived receipts"),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.archive, color: Colors.black38),
+                        Global.defaultIconSpacing,
+                        Text("View archived receipts")
+                      ]
+                    )
 
                   ),
 
@@ -110,6 +121,8 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
     var columnChartData = snapshot.data!['columnChartData'];
     var pieChartData = snapshot.data!['pieChartData'];
     double total = snapshot.data!['total'];
+    //Data received from cloud firestore gives no type inference, though since we know it returns an integer,
+    //We can call .toInt() on it, despite Dart giving it the type of Object.
     int receiptsUploaded = snapshot.data!['receiptsUploaded'].toInt();
 
     return ListView(

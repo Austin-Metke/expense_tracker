@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:expense_tracker/Global.dart';
 import 'package:expense_tracker/UserPages/UserDetailsPage.dart';
-import 'package:expense_tracker/UserPages/addUserPage.dart';
+import 'package:expense_tracker/UserPages/AddUserPage.dart';
 import 'package:expense_tracker/UserPages/EditUserPage.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
@@ -42,29 +42,6 @@ class _ViewUsersPageState extends State<ViewUsersPage> {
           backgroundColor: Global.colorBlue,
           centerTitle: true,
           title: const Text("All Employees"),
-          actions: [
-            PopupMenuButton<int>(
-              itemBuilder: (context) {
-                return [
-                  PopupMenuItem<int>(
-                    value: 0,
-                    child: FittedBox(
-                      child: Row(
-                        children: const [
-                          Icon(Icons.person_add_alt, color: Colors.black),
-                          Global.defaultIconSpacing,
-                          Text("Add user"),
-                        ],
-                      ),
-                    ),
-                  ),
-                ];
-              },
-              onSelected: (value) => {
-                if (value == 0) {_showAddUserPage()}
-              },
-            ),
-          ],
         ),
         body: StreamBuilder<QuerySnapshot>(
           stream: _userStream,
@@ -146,7 +123,7 @@ class _ViewUsersPageState extends State<ViewUsersPage> {
                   color: Colors.white10,
                   child: Row(
                     children: <Widget>[
-                      const Icon(Icons.person_outline),
+                      const Icon(Icons.person_outline,),
                       Text((Global.auth.currentUser!.uid == document.id)
                           ? "(you) $name, $isManager"
                           : "name: $name, $isManager"),

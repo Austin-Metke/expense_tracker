@@ -17,7 +17,6 @@ class ViewArchivedReceiptsPage extends StatefulWidget {
 
 class _ViewArchivedReceiptsPageState extends State<ViewArchivedReceiptsPage> {
 
-
   late final DateTime? _selectedDay;
   late final String? _userID;
 
@@ -112,7 +111,18 @@ class _ViewArchivedReceiptsPageState extends State<ViewArchivedReceiptsPage> {
 
   Stream<QuerySnapshot> _getArchivedReceipts() async* {
 
-    yield* FirebaseFirestore.instance.collection('archivedReceipts/$_userID/receipts').where('date', isEqualTo: _selectedDay!.microsecondsSinceEpoch).snapshots();
+    DateTime sunday = _selectedDay!;
+    DateTime saturday = _selectedDay!;
+    while(sunday.weekday != DateTime.sunday) {
+      sunday = sunday.subtract(const Duration(days: 1));
+      print("Sunday microseconds: ${sunday.microsecondsSinceEpoch}");
+    }
+
+    while(saturday.weekday != DateTime.saturday) {
+      saturday = saturday.add(const Duration(days: 1));
+    }
+
+    yield* FirebaseFirestore.instance.collection('archivedReceipts/$_userID/receipts').where('date', isGreaterThanOrEqualTo: sunday.microsecondsSinceEpoch, isLessThanOrEqualTo: saturday.microsecondsSinceEpoch).snapshots();
 
   }
 

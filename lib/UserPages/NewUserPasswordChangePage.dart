@@ -22,6 +22,8 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
   String? _password;
   bool? _isManager;
 
+  bool _showPassword = false;
+  bool _showValidatePassword = false;
   @override
   void initState() {
     super.initState();
@@ -44,17 +46,25 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: TextFormField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
+                    suffixIcon: GestureDetector(
+                        child: _showPassword
+                            ? const Icon(Icons.visibility_off)
+                            : const Icon(Icons.visibility),
+                        onTap: () => setState(() {
+                          _showPassword = !_showPassword;
+                        })),
                     labelText: "Password",
-                    border: OutlineInputBorder(
+                    border: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(
                           Radius.circular(Global.defaultRadius)),
                     ),
-                    prefixIcon: Icon(Icons.lock),
+                    prefixIcon: const Icon(Icons.lock),
                     hintText: "Password",
                   ),
                   validator: (value) => _passwordValidator(value),
                   onChanged: (value) => setState(() => _password = value),
+                  obscureText: !_showPassword,
                 ),
               ),
 
@@ -62,9 +72,16 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: TextFormField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
+                    suffixIcon: GestureDetector(
+                        child: _showValidatePassword
+                            ? const Icon(Icons.visibility_off)
+                            : const Icon(Icons.visibility),
+                        onTap: () => setState(() {
+                          _showValidatePassword = !_showValidatePassword;
+                        })),
                     labelText: "Confirm password",
-                    border: OutlineInputBorder(
+                    border: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(
                           Radius.circular(Global.defaultRadius)),
                     ),
@@ -72,6 +89,7 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
                     hintText: "Confirm Password",
                   ),
                   validator: (value) => _confirmPasswordValidator(value),
+    obscureText: !_showValidatePassword,
                 ),
               ),
 
@@ -87,38 +105,47 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
   String? _passwordValidator(String? value) {
     if (value!.isEmpty) {
       return "Please enter a password!";
+    } else if(value.length < 6) {
+      return "Password must be 6 characters long!";
     }
+
     return null;
   }
 
   String? _confirmPasswordValidator(String? value) {
     if (value!.isEmpty) {
       return "Please enter a password";
-    } else if (value != _password) {
+    } else if(value.length < 6) {
+      return "Password must be 6 characters long!";
+    }
+    else if (value != _password) {
       return "Passwords do not match!";
     }
+
 
     return null;
   }
 
   void _changePassword() async {
-    Global.auth.currentUser!.updatePassword(_password!);
+    if (_key.currentState!.validate()) {
+      try {
+        await Global.auth.currentUser!.updatePassword(_password!);
+        await FirebaseFirestore.instance
+            .doc('isFirstSignIn/${Global.auth.currentUser!.uid}')
+            .update({
+          "isFirstSignIn": false,
+        });
 
-    try {
-      await FirebaseFirestore.instance
-          .doc('isFirstSignIn/${Global.auth.currentUser!.uid}')
-          .update({
-        "isFirstSignIn": false,
-      });
-
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => (_isManager!)
-                  ? const ManagerNavigationPage()
-                  : const EmployeeNavigationPage()));
-    } on FirebaseAuthException catch (e) {
-      print(e);
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => (_isManager!)
+                    ? const ManagerNavigationPage()
+                    : const EmployeeNavigationPage()));
+      } on FirebaseAuthException catch (e) {
+       print(e);
+      }
+      return null;
     }
   }
 }

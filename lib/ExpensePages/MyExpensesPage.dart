@@ -27,15 +27,17 @@ class _MyExpensesPageState extends State<MyExpensesPage> {
         builder: (BuildContext context,
             AsyncSnapshot<Map<String, dynamic>> snapshot) {
           if (snapshot.connectionState == ConnectionState.none) {
+            //Display nothing if no connection is being made
             return Container();
           } else if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: Text("Loading..."));
           } else if (snapshot.hasError) {
             print(snapshot.error);
-            return const Text("An unknown error occurred!");
+            //A RefreshIndicator only works if its child is a ListView
+            return  RefreshIndicator(child: ListView(children: const [Center(heightFactor: 30,child: Text("An error occurred! Please refresh"))],), onRefresh: _onRefresh);
           } else if (snapshot.hasData) {
             if(snapshot.data!['receiptsUploaded'] == 0) {
-              return const Center(child: Text("No expenses have been made"));
+              return  RefreshIndicator(child: ListView(children: const [Center(heightFactor: 30,child: Text("No expenses have bee made"))],), onRefresh: _onRefresh);
             } else {
               return RefreshIndicator(
                   child: _getChartListView(snapshot), onRefresh: _onRefresh);

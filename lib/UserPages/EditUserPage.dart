@@ -136,27 +136,6 @@ class _EditUserPageState extends State<EditUserPage> {
     return null;
   }
 
-  _passwordValidator(String? value) {
-    if (value!.isEmpty) {
-      return 'Please enter a password';
-    }
-
-    //return null if text is valid
-    return null;
-  }
-
-  _confirmPasswordValidator(String? value) {
-    if (value!.isEmpty) {
-      return 'please enter a password';
-    }
-
-    if (value != _password) {
-      return 'passwords do not match';
-    }
-
-    return null;
-  }
-
   _nameValidator(String? value) {
     if (value!.isEmpty) {
       return 'please enter a name';
@@ -169,7 +148,7 @@ class _EditUserPageState extends State<EditUserPage> {
       'User \'$_name\' successfully updated!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
@@ -183,7 +162,7 @@ class _EditUserPageState extends State<EditUserPage> {
       'Password must be 6 characters long',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
         fontSize: MediaQuery.of(context).size.width * 0.040,
         color: Colors.white,
@@ -198,7 +177,7 @@ class _EditUserPageState extends State<EditUserPage> {
       'A user with that phone number already exists',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
@@ -245,7 +224,6 @@ class _EditUserPageState extends State<EditUserPage> {
       oldEmail: '$_oldphoneNumber@fakeemail.com',
       email: '${_newphoneNumber ?? _oldphoneNumber}@fakeemail.com',
       name: _name,
-      password: _password,
       phoneNumber: _newphoneNumber ?? _oldphoneNumber,
     ));
     switch (functionResponse) {

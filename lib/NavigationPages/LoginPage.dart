@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:expense_tracker/NavigationPages/EmployeeNavigationPage.dart';
 import 'package:expense_tracker/UserPages/NewUserPasswordChangePage.dart';
 import 'package:expense_tracker/NavigationPages/ManagerNavigationPage.dart';
@@ -15,7 +14,6 @@ class ExpenseTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return const OKToast(
       child: MaterialApp(
           home: Scaffold(resizeToAvoidBottomInset: true, body: LoginPage())),
@@ -35,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
 
   late String _phoneNumber;
   late String _password;
-  late bool _visPass = false;
+  late bool _showPassword = false;
   late bool? _userNotFound = false;
   late bool? _wrongPassword = false;
   late bool? _tooManyRequests = false;
@@ -47,19 +45,21 @@ class _LoginPageState extends State<LoginPage> {
     final formState = _key.currentState;
 
     if (formState!.validate()) {
+      /*
+      Firebase does not support logging in with phone number and password.
+      So we append "@fakeemail.com" to circumvent it, the end user never sees this
+       */
       var emailCredential = EmailAuthProvider.credential(
           email: _phoneNumber + "@fakeemail.com", password: _password);
       try {
-
         await Global.auth.signInWithCredential(emailCredential);
-        var firstSignIn = await _isFirstSignIn();
+        var isFirstSignIn = await _isFirstSignIn();
         var isManager = await _isManager();
 
         _phoneTextFieldController.clear();
         _passwordTextFieldController.clear();
 
-        if (firstSignIn) {
-          //TODO Create change password page for new users
+        if (isFirstSignIn) {
           _showChangePasswordPage(isManager);
         } else {
           _showUserFunctionPage(isManager);
@@ -97,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
       child: SingleChildScrollView(
         child: Column(
           children: [
+
             //Temporary Logo
             const Align(
               alignment: Alignment.topCenter,
@@ -105,6 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Image(image: AssetImage("assets/cvcenterprise.png")),
               ),
             ),
+
             //Phone number field
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -152,7 +154,8 @@ class _LoginPageState extends State<LoginPage> {
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(Global.defaultRadius)),
+            borderRadius:
+                BorderRadius.all(Radius.circular(Global.defaultRadius)),
           ),
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
@@ -177,16 +180,16 @@ class _LoginPageState extends State<LoginPage> {
         prefixIcon: const Icon(Icons.lock),
         hintText: "Password",
         suffixIcon: GestureDetector(
-            child: _visPass
+            child: _showPassword
                 ? const Icon(Icons.visibility_off)
                 : const Icon(Icons.visibility),
             onTap: () => setState(() {
-                  _visPass = !_visPass;
+                  _showPassword = !_showPassword;
                 })),
       ),
       validator: (value) => _passwordValidator(value),
       controller: _passwordTextFieldController,
-      obscureText: !_visPass,
+      obscureText: !_showPassword,
       onChanged: (value) => _password = value,
       onFieldSubmitted: (value) => _key.currentState?.validate());
 
@@ -198,10 +201,12 @@ class _LoginPageState extends State<LoginPage> {
       );
 
   _forgotPassword() {
+    //TODO implement forgot password prompt
     print("Forgot password");
   }
 
   changeLang() {
+    //TODO implement language changer
     print("Change language");
   }
 
@@ -238,8 +243,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _showUserFunctionPage(bool isManager) async {
-
-    Navigator.push(
+    Navigator.pushReplacement(
         context,
         MaterialPageRoute(
             builder: (context) => (isManager)
@@ -248,19 +252,20 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _showChangePasswordPage(bool isManager) {
-    Navigator.push(
+    Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-            builder: (context) =>  NewUserPasswordChangePage(isManager: isManager)));
+            builder: (context) =>
+                NewUserPasswordChangePage(isManager: isManager)));
   }
 }
 
 Future<bool> _isFirstSignIn() async {
-
-  var isFirstSignIn = await FirebaseFirestore.instance.doc('isFirstSignIn/${Global.auth.currentUser!.uid}').get();
+  var isFirstSignIn = await FirebaseFirestore.instance
+      .doc('isFirstSignIn/${Global.auth.currentUser!.uid}')
+      .get();
 
   return isFirstSignIn.get('isFirstSignIn');
-
 }
 
 Future<bool> _isManager() async {

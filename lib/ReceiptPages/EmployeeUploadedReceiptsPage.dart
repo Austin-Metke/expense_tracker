@@ -71,16 +71,25 @@ class _EmployeeUploadedReceiptsPageState
         stream: _receiptStream,
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: Text("Loading"));
-          } else if (snapshot.connectionState == ConnectionState.active ||
-              snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasError) {
-              return const Center(child: Text("An unknown error has occurred"));
-            } else if (snapshot.hasData) {
-              return _getDocumentListView(snapshot);
+            return const Center(child: Text("Loading..."));
+          } else if (snapshot.hasError) {
+            print(snapshot.error);
+            return RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: const Center(
+                    child: Text(
+                        "An unknown error has occurred, please refresh and try again")));
+          } else {
+            if (snapshot.data!.size == 0) {
+              return RefreshIndicator(
+                  onRefresh: _onRefresh,
+                  child: const Center(
+                      child: Text("No receipts have been uploaded")));
             }
+
+            return RefreshIndicator(
+                child: _getDocumentListView(snapshot), onRefresh: _onRefresh);
           }
-          return _getDocumentListView(snapshot);
         },
       ),
     );
@@ -105,7 +114,6 @@ class _EmployeeUploadedReceiptsPageState
             expenseType: expenseType,
             date: date,
             comment: comment,
-            backgroundColor: Colors.black26,
           ),
         ));
       }).toList(),
@@ -149,5 +157,10 @@ class _EmployeeUploadedReceiptsPageState
         .collection("users/$_userID/receipts")
         .orderBy('date', descending: false)
         .snapshots();
+  }
+
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() {});
   }
 }

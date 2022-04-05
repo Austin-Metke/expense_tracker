@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -25,14 +26,19 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
         body: Center(
           child: FutureBuilder(
             future: _getExpenses(),
-            builder: (BuildContext context, AsyncSnapshot<List<num>> snapshot) {
+            builder: (BuildContext context, AsyncSnapshot<Map<String, dynamic>?> snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Text("Loading...");
               } else if (snapshot.hasError) {
-                return const Text("An error occurred");
+                return  RefreshIndicator(child: ListView(children: const [Center(heightFactor: 30,child: Text("An error occurred! Please refresh"))],), onRefresh: _onRefresh);
               } else {
+
+                if(snapshot.data!['cumulativeReceiptCount'] == 0) {
+                  return  RefreshIndicator(child: ListView(children: const [Center(heightFactor: 30,child: Text("No expenses have bee made"))],), onRefresh: _onRefresh);
+                }
+
                 return RefreshIndicator(
-                  onRefresh: _onRefresh,
+                    onRefresh: _onRefresh,
                     child: _getExpensesListView(snapshot));
               }
             },
@@ -40,101 +46,111 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
         ));
   }
 
-  Widget _getExpensesListView(AsyncSnapshot<List<num>> snapshot) {
+  Widget _getExpensesListView(AsyncSnapshot<Map<String, dynamic>?> snapshot) {
 
-    final foodExpenses = double.parse(snapshot.data!.elementAt(0).toDouble().toStringAsFixed(2));
 
-    final toolsExpenses = snapshot.data!.elementAt(1).toDouble();
-    final travelExpenses = snapshot.data!.elementAt(2).toDouble();
-    final otherExpenses = snapshot.data!.elementAt(3).toDouble();
-    final totalExpenses =
-        snapshot.data?.elementAt(4).toDouble().toStringAsFixed(2);
-    final foodExpensesMade = snapshot.data!.elementAt(5).toDouble();
-    final toolsExpensesMade = snapshot.data!.elementAt(6).toDouble();
-    final travelExpensesMade = snapshot.data!.elementAt(7).toDouble();
-    final otherExpensesMade = snapshot.data!.elementAt(8).toDouble();
-    final totalExpensesMade = snapshot.data!.elementAt(9);
+    //To prevent rounding errors during maths, all expenses are stored in cents
+    final double foodTotal = snapshot.data!['cumulativeFoodTotal'] / 100;
+    final double toolsTotal = snapshot.data!['cumulativeToolsTotal'] / 100;
+    final double travelTotal = snapshot.data!['cumulativeTravelTotal'] / 100;
+    final double otherTotal = snapshot.data!['cumulativeOtherTotal'] / 100;
+    final double cumulativeTotal = snapshot.data!['cumulativeReceiptTotal'] / 100;
+
+    //ChartData only takes in a double, hence the use of toDouble()
+    final double foodCount = snapshot.data!['cumulativeFoodCount'].toDouble();
+    final double toolsCount = snapshot.data!['cumulativeToolsCount'].toDouble();
+    final double travelCount = snapshot.data!['cumulativeTravelCount'].toDouble();
+    final double otherCount = snapshot.data!['cumulativeOtherCount'].toDouble();
+    final int cumulativeCount = snapshot.data!['cumulativeReceiptCount'];
+
+
     var pieChartData = <ChartData>[
-      ChartData(ExpenseType.food, foodExpenses, Colors.green),
-      ChartData(ExpenseType.tools, toolsExpenses, Colors.purple),
-      ChartData(ExpenseType.travel, travelExpenses, Colors.blue),
-      ChartData(ExpenseType.other, otherExpenses, Colors.red),
+      ChartData(ExpenseType.food, foodTotal, Colors.green),
+      ChartData(ExpenseType.tools, toolsTotal, Colors.purple),
+      ChartData(ExpenseType.travel, travelTotal, Colors.blue),
+      ChartData(ExpenseType.other, otherTotal, Colors.red),
     ];
 
     var barChartData = <ChartData>[
-      ChartData(ExpenseType.food, foodExpensesMade, Colors.green),
-      ChartData(ExpenseType.tools, toolsExpensesMade, Colors.purple),
-      ChartData(ExpenseType.travel, travelExpensesMade, Colors.blue),
-      ChartData(ExpenseType.other, otherExpensesMade, Colors.red),
+      ChartData(ExpenseType.food, foodCount, Colors.green),
+      ChartData(ExpenseType.tools, toolsCount, Colors.purple),
+      ChartData(ExpenseType.travel, travelCount, Colors.blue),
+      ChartData(ExpenseType.other, otherCount, Colors.red),
     ];
 
     return ListView(
-        children: [
-          //**************Pie Chart******
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
-              child: SfCircularChart(
-                title: ChartTitle(text: "Total Expenses: \$ $totalExpenses"),
-                borderWidth: 2,
-                borderColor: Colors.black,
-                legend: Legend(
-                    isVisible: true,
-                    position: LegendPosition.top,
-                    offset: Offset.zero),
-                series: <CircularSeries>[
-                  PieSeries<ChartData, String>(
-                      radius: "75%",
-                      dataSource: pieChartData,
-                      pointColorMapper: (ChartData data, _) => data.color,
-                      xValueMapper: (ChartData data, _) => data.x,
-                      yValueMapper: (ChartData data, _) => data.y,
-                      dataLabelMapper: (ChartData data, _) =>
-                          "\$ ${data.y.toStringAsFixed(2)}",
-                      legendIconType: LegendIconType.circle,
-                      dataLabelSettings: const DataLabelSettings(
-                        showZeroValue: false,
+      children:[
+              //**************Pie Chart**********
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: SfCircularChart(
+                    title:
+                        ChartTitle(text: "Total Expenses: \$ ${cumulativeTotal.toStringAsFixed(2)}"),
+                    borderWidth: 2,
+                    borderColor: Colors.black,
+                    legend: Legend(
                         isVisible: true,
-                        labelIntersectAction: LabelIntersectAction.shift,
-                        overflowMode: OverflowMode.shift,
-                        connectorLineSettings: ConnectorLineSettings(
-                          color: Colors.black,
-                          type: ConnectorType.line,
-                        ),
-                        labelPosition: ChartDataLabelPosition.outside,
-                      ))
-                ],
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: SizedBox(
-    child: SfCartesianChart(
-              borderWidth: 2,
-              borderColor: Colors.black,
-              title: ChartTitle(text: "Expenses Made: $totalExpensesMade"),
-              primaryXAxis: CategoryAxis(
-                isVisible: true,
-              ),
-              primaryYAxis: NumericAxis(
-                  interval: 1,
-                  isVisible: true,
-                  rangePadding: ChartRangePadding.auto),
-              series: <ChartSeries<ChartData, String>>[
-                ColumnSeries<ChartData, String>(
-                  dataSource: barChartData,
-                  xValueMapper: (ChartData data, _) => data.x,
-                  yValueMapper: (ChartData data, _) => data.y,
-                  pointColorMapper: (ChartData data, _) => data.color,
+                        position: LegendPosition.top,
+                        offset: Offset.zero),
+                    series: <CircularSeries>[
+                      PieSeries<ChartData, String>(
+                          radius: "75%",
+                          dataSource: pieChartData,
+                          pointColorMapper: (ChartData data, _) => data.color,
+                          xValueMapper: (ChartData data, _) => data.x,
+                          yValueMapper: (ChartData data, _) => data.y,
+                          dataLabelMapper: (ChartData data, _) =>
+                              "\$ ${data.y.toStringAsFixed(2)}",
+                          legendIconType: LegendIconType.circle,
+                          dataLabelSettings: const DataLabelSettings(
+                            showZeroValue: false,
+                            isVisible: true,
+                            labelIntersectAction: LabelIntersectAction.shift,
+                            overflowMode: OverflowMode.shift,
+                            connectorLineSettings: ConnectorLineSettings(
+                              color: Colors.black,
+                              type: ConnectorType.line,
+                            ),
+                            labelPosition: ChartDataLabelPosition.outside,
+                          ))
+                    ],
+                  ),
                 ),
-              ],
-            ),
-            ),),
-        ],
-      );
+              ),
+              //*****************************
+
+              //***********BarChart**************
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: SizedBox(
+                  child: SfCartesianChart(
+                    borderWidth: 2,
+                    borderColor: Colors.black,
+                    title:
+                        ChartTitle(text: "Expenses Made: $cumulativeCount"),
+                    primaryXAxis: CategoryAxis(
+                      isVisible: true,
+                    ),
+                    primaryYAxis: NumericAxis(
+                        interval: 1,
+                        isVisible: true,
+                        rangePadding: ChartRangePadding.auto),
+                    series: <ChartSeries<ChartData, String>>[
+                      ColumnSeries<ChartData, String>(
+                        dataSource: barChartData,
+                        xValueMapper: (ChartData data, _) => data.x,
+                        yValueMapper: (ChartData data, _) => data.y,
+                        pointColorMapper: (ChartData data, _) => data.color,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              //**********************
+            ],
+    );
   }
 
   Future<void> _onRefresh() async {
@@ -143,33 +159,8 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
   }
 }
 
-Future<List<num>> _getExpenses() async {
-  HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
-      .httpsCallable('getExpenses');
-  final resp = await callable();
-  final List expenses = resp.data;
+Future<Map<String, dynamic>?> _getExpenses() async {
+  var cumulativeStatsRef = await FirebaseFirestore.instance.doc('cumulativeStats/cumulativeStats').get();
+  return cumulativeStatsRef.data();
 
-  final foodExpenses = expenses.elementAt(0);
-  final toolsExpenses = expenses.elementAt(1);
-  final travelExpenses = expenses.elementAt(2);
-  final otherExpenses = expenses.elementAt(3);
-  final totalExpenses = expenses.elementAt(4);
-  final foodExpensesMade = expenses.elementAt(5);
-  final toolsExpensesMade = expenses.elementAt(6);
-  final travelExpensesMade = expenses.elementAt(7);
-  final otherExpensesMade = expenses.elementAt(8);
-  final totalExpensesMade = expenses.elementAt(9);
-
-  return [
-    foodExpenses,
-    toolsExpenses,
-    travelExpenses,
-    otherExpenses,
-    totalExpenses,
-    foodExpensesMade,
-    toolsExpensesMade,
-    travelExpensesMade,
-    otherExpensesMade,
-    totalExpensesMade
-  ];
 }

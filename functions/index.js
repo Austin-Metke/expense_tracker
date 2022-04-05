@@ -18,7 +18,7 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
             let newUser = await auth.createUser({
                 displayName: data.name,
                 email: data.email,
-                password: data.password,
+                password: "password", //Default password for new user, they're prompted to change it when they first log in
             });
 
             //Sets custom claims for user
@@ -65,7 +65,7 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
 
 exports.deleteData = functions.region('us-west2').auth.user().onDelete(async (user, context) => {
 
-    //Recursively deletes all collections under user collection
+    //Recursively deletes all subcollections under user collection
     await admin.firestore().recursiveDelete(admin.firestore().collection('users').doc(user.uid)).then(() => {
 
         console.log("User " + user.uid + " data was successfully deleted!");
@@ -112,11 +112,9 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
                 isManager: data.isManager
             });
 
-
             await auth.updateUser(updatedUser.uid, {
                 displayName: data.name,
                 email: data.email,
-                password: data.password,
             });
 
             await firestore.doc('users/' + updatedUser.uid).update({
@@ -136,7 +134,7 @@ exports.updateUser = functions.region('us-west2').https.onCall(async (data, cont
 });
 
 
-exports.setReceiptCounts = functions.region('us-west2').firestore.document('users/{userID}/receipts/{receiptID}').onWrite(async (change, context) => {
+exports.updateUserExpenses = functions.region('us-west2').firestore.document('users/{userID}/receipts/{receiptID}').onWrite(async (change, context) => {
 
     const userID = context.params.userID;
     const statsRef = firestore.collection('stats').doc(userID);
@@ -399,8 +397,7 @@ exports.setReceiptCounts = functions.region('us-west2').firestore.document('user
 });
 
 
-exports.archive = functions.pubsub.schedule('0 0 * * 6').onRun(async(context) => {
-    //TODO Make this not bad
+exports.archive = functions.region('us-west2').pubsub.schedule('0 0 * * 6').onRun(async(context) => {
 
     const batch = firestore.batch();
     const usersQuerySnapshot = await firestore.collection('users').get();
@@ -424,11 +421,165 @@ exports.archive = functions.pubsub.schedule('0 0 * * 6').onRun(async(context) =>
 
 
 
-exports.setExpenses = functions.region('us-west2').firestore.document('stats/{userID}').onUpdate(async (change, context ) => {
+exports.updateCumulativeStats = functions.region('us-west2').firestore.document('stats/{userID}').onUpdate(async (change, context ) => {
 
-    const userID = context.params.userID;
-    console.log("USERID: " + userID);
     const statsRef = firestore.doc('cumulativeStats/cumulativeStats');
-    
+
+
+    //On receiptCount change
+    if(change.before.get('receiptCount') > change.after.get('receiptCount')) {
+
+        await statsRef.update({
+            cumulativeReceiptCount: increment(-1)
+        });
+    } else if(change.before.get('receiptCount') < change.after.get('receiptCount')) {
+
+        await statsRef.update({
+            cumulativeReceiptCount: increment(1)
+        });
+    }
+
+    //On receiptTotal change
+    if(change.before.get('receiptTotal') > change.after.get('receiptTotal')) {
+        let total = change.after.get('receiptTotal') - change.before.get('receiptTotal');
+
+        await statsRef.update({
+            cumulativeReceiptTotal: increment(total)
+        });
+    } else if(change.before.get('receiptTotal') < change.after.get('receiptTotal')) {
+        let total = change.after.get('receiptTotal') - change.before.get('receiptTotal');
+        await statsRef.update({
+            cumulativeReceiptTotal: increment(total)
+        });
+    }
+
+
+    //On foodCount change
+    if(change.before.get('foodCount') > change.after.get('foodCount')) {
+
+        await statsRef.update({
+
+            cumulativeFoodCount: increment(-1)
+
+        });
+    } else if(change.before.get('foodCount') < change.after.get('foodCount')) {
+
+        await statsRef.update({
+            cumulativeFoodCount: increment(1)
+        });
+    }
+
+    //on foodTotal change
+    if(change.before.get('foodTotal') > change.after.get('foodTotal')) {
+        let total = change.after.get('foodTotal') - change.before.get('foodTotal');
+
+        await statsRef.update({
+            cumulativeFoodTotal: increment(total)
+        });
+
+    } else if(change.before.get('foodTotal') < change.after.get('foodTotal')) {
+        let total = change.after.get('foodTotal') - change.before.get('foodTotal');
+
+        await statsRef.update({
+            cumulativeFoodTotal: increment(total),
+        });
+    }
+
+    //On otherCount change
+    if(change.before.get('otherCount') > change.after.get('otherCount')) {
+
+        await statsRef.update({
+
+            cumulativeOtherCount: increment(-1)
+
+        });
+    } else if(change.before.get('otherCount') < change.after.get('otherCount')) {
+
+        await statsRef.update({
+            cumulativeOtherCount: increment(1)
+        });
+    }
+
+    //On otherTotal change
+    if(change.before.get('otherTotal') > change.after.get('otherTotal')) {
+        let total = change.after.get('otherTotal') - change.before.get('otherTotal');
+
+        await statsRef.update({
+            cumulativeOtherTotal: increment(total)
+        });
+
+    } else if(change.before.get('otherTotal') < change.after.get('otherTotal')) {
+        let total = change.after.get('otherTotal') - change.before.get('otherTotal');
+
+        await statsRef.update({
+            cumulativeOtherTotal: increment(total),
+        });
+    }
+
+
+
+    //On toolsCount change
+    if(change.before.get('toolsCount') > change.after.get('toolsCount')) {
+
+        await statsRef.update({
+
+            cumulativeToolsCount: increment(-1)
+
+        });
+    } else if(change.before.get('toolsCount') < change.after.get('toolsCount')) {
+
+        await statsRef.update({
+            cumulativeToolsCount: increment(1)
+        });
+    }
+
+    //On toolsTotal change
+    if(change.before.get('toolsTotal') > change.after.get('toolsTotal')) {
+        let total = change.after.get('toolsTotal') - change.before.get('toolsTotal');
+
+        await statsRef.update({
+            cumulativeToolsTotal: increment(total)
+        });
+
+    } else if(change.before.get('toolsTotal') < change.after.get('toolsTotal')) {
+        let total = change.after.get('toolsTotal') - change.before.get('toolsTotal');
+
+        await statsRef.update({
+            cumulativeToolsTotal: increment(total),
+        });
+    }
+
+
+    //On travelCount change
+    if(change.before.get('travelCount') > change.after.get('travelCount')) {
+
+        await statsRef.update({
+
+            cumulativeTravelCount: increment(-1)
+
+        });
+    } else if(change.before.get('travelCount') < change.after.get('travelCount')) {
+
+        await statsRef.update({
+            cumulativeTravelCount: increment(1)
+        });
+    }
+
+    //On travelTotal change
+    if(change.before.get('travelTotal') > change.after.get('travelTotal')) {
+        let total = change.after.get('travelTotal') - change.before.get('travelTotal');
+
+        await statsRef.update({
+            cumulativeTravelTotal: increment(total)
+        });
+
+    } else if(change.before.get('travelTotal') < change.after.get('travelTotal')) {
+        let total = change.after.get('travelTotal') - change.before.get('travelTotal');
+
+        await statsRef.update({
+            cumulativeTravelTotal: increment(total),
+        });
+    }
+
 
 });

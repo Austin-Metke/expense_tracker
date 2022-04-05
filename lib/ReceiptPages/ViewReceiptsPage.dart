@@ -6,7 +6,6 @@ import 'package:expense_tracker/FirebaseOperations/FirestoreActions.dart';
 import 'package:expense_tracker/Global.dart';
 import 'package:expense_tracker/ReceiptPages/UploadReceiptPage.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'EditReceiptPage.dart';
 
@@ -58,14 +57,12 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
               centerTitle: true,
               title: const Text("Uploaded Receipts"),
               actions: [
-
                 PopupMenuButton(
                     itemBuilder: (context) {
                       return [
                         const PopupMenuItem<int>(
                           value: 0,
                           child: Text("Add Receipt"),
-
                         ),
                         PopupMenuItem<int>(
                           value: 1,
@@ -115,9 +112,12 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                     return RefreshIndicator(
                         onRefresh: _onRefresh,
                         child: const Center(
-                            child: Text(
-                                "An unknown error has occurred, please refresh and try again")));
+                            child: Text("An unknown error has occurred, please refresh and try again")));
                   } else if (snapshot.hasData) {
+                    if (snapshot.data!.size == 0) {
+                      return RefreshIndicator(onRefresh: _onRefresh, child: const Center(child: Text("No receipts have been uploaded")));
+                    }
+
                     return RefreshIndicator(
                         onRefresh: () => _onRefresh(),
                         child: _getDocumentListView(snapshot));
@@ -294,14 +294,12 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
               expenseType: expenseType,
               image: image,
               total: total,
-              backgroundColor: Colors.black26,
             ),
           ),
         );
       }).toList(),
     );
   }
-
 
   Future<void> _onRefresh() async {
     await Future.delayed(const Duration(seconds: 2));

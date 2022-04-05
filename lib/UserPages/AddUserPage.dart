@@ -189,8 +189,7 @@ class _AddUserPageState extends State<AddUserPage> {
         name: _name,
         isManager: _isManager,
         email: '$_phoneNumber@fakeemail.com',
-        phoneNumber: _phoneNumber,
-        password: _password));
+        phoneNumber: _phoneNumber));
 
 
     switch (functionStatus) {

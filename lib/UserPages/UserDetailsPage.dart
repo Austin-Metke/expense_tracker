@@ -21,9 +21,6 @@ class UserDetailsPage extends StatefulWidget {
 
 class _UserDetailsPageState extends State<UserDetailsPage> {
   late String _name;
-  late double? _total;
-  late int? _receiptsUploaded;
-  late String? _phoneNumber;
   late String? _userDocumentID;
 
   @override
@@ -31,11 +28,6 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
     super.initState();
     _userDocumentID = widget.userDocumentID;
     _name = widget.userData['name'];
-    _total = (widget.userData['total'] == null || widget.userData['total'] == 0)
-        ? 0
-        : widget.userData['total'] / 100;
-    _receiptsUploaded = widget.userData['uploadedReceipts'];
-    _phoneNumber = widget.userData['phoneNumber'];
   }
 
   @override
@@ -101,12 +93,11 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                 return const Text("An unknown error occurred!");
               } else if (snapshot.hasData) {
                 if (snapshot.data!['receiptCount'] == 0) {
-                  return const Text("No expenses have been made");
-                } else {
+                  return const Center(child: Text("No expenses have been made"));
+                }
                   return RefreshIndicator(
                       child: _getChartListView(snapshot),
                       onRefresh: _onRefresh);
-                }
               }
               return Container();
             }));
@@ -123,7 +114,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
     double total = snapshot.data!['total'];
     //Data received from cloud firestore gives no type inference, though since we know it returns an integer,
     //We can call .toInt() on it, despite Dart giving it the type of Object.
-    int receiptsUploaded = snapshot.data!['receiptsUploaded'].toInt();
+    int receiptsUploaded = snapshot.data!['receiptCount'].toInt();
 
     return ListView(
       children: [
@@ -251,7 +242,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
 
     return <String, dynamic>{
       'total': cumulativeTotal,
-      "receiptsUploaded": receiptCount,
+      "receiptCount": receiptCount,
       "pieChartData": pieChartData,
       "columnChartData": columnChartData,
     };

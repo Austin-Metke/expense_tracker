@@ -47,6 +47,7 @@ class _ReceiptWidgetState extends State<ReceiptWidget> {
   TextStyle? _dateTextStyle;
   TextStyle? _expenseTypeTextStyle;
   final TextStyle? _defaultTextStyle = const TextStyle(fontSize: 18);
+  final Color? _defaultColor = Colors.black26;
 
   @override
   void initState() {
@@ -66,7 +67,7 @@ class _ReceiptWidgetState extends State<ReceiptWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        color: _backgroundColor,
+        color: (_backgroundColor ?? _defaultColor),
         child: Column(children: [
           Image.memory(_image!),
           Text(

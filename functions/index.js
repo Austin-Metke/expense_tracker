@@ -46,7 +46,11 @@ exports.makeUser = functions.region('us-west2').https.onCall(async (data, contex
                 toolsTotal: 0,
                 travelCount: 0,
                 travelTotal: 0,
+            });
 
+            //Creates an isFirstSignIn document for the user, default is true, only false after first sign in
+            await firestore.doc('isFirstSignIn/' + newUser.uid).create({
+               isFirstSignIn: true,
             });
 
             return 'success';

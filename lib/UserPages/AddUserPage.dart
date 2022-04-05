@@ -215,7 +215,7 @@ class _AddUserPageState extends State<AddUserPage> {
       'User \'$_name\' successfully created!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.035,
           color: Colors.white),
@@ -229,7 +229,7 @@ class _AddUserPageState extends State<AddUserPage> {
       'Password must be 6 characters long',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
         fontSize: MediaQuery.of(context).size.width * 0.035,
         color: Colors.white,
@@ -244,7 +244,7 @@ class _AddUserPageState extends State<AddUserPage> {
       'A user with that phone number already exists',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.035,
           color: Colors.white),
@@ -258,13 +258,13 @@ class _AddUserPageState extends State<AddUserPage> {
       'Creating user...',
       position: ToastPosition.bottom,
       backgroundColor: Colors.grey,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.035,
           color: Colors.white),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
-      duration: Duration(days: 365),
+      duration: const Duration(days: 365),
     );
   }
 
@@ -273,7 +273,7 @@ class _AddUserPageState extends State<AddUserPage> {
       'An unknown error occurred!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.035,
           color: Colors.white),

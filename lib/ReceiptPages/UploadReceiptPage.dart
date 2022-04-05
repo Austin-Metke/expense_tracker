@@ -81,46 +81,34 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                           TextButton(
                             style: Global.defaultButtonStyle,
                             child: Row(
-                              children: <Widget>[
-                                const Icon(
+                              children: const <Widget>[
+                                Icon(
                                   Icons.photo_library_outlined,
                                 ),
                                 Global.defaultIconSpacing,
                                 Text(
                                   "Pick image from gallery",
-                                  style: TextStyle(
-                                    fontSize:
-                                        MediaQuery.of(context).size.width *
-                                            0.035,
-                                  ),
                                 ),
                               ],
                             ),
                             onPressed: () => getImage(),
                           ),
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.0150,
-                          ),
+
+                         const Padding(padding: EdgeInsets.all(5)),
+
                           TextButton(
                             style: Global.defaultButtonStyle,
                             onPressed: () => getCamera(),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
+                              children: const <Widget>[
                                 Icon(
                                   Icons.camera_alt,
-                                  size:
-                                      MediaQuery.of(context).size.width * 0.050,
                                 ),
                                 Global.defaultIconSpacing,
                                 Text(
                                   "Take picture of receipt",
-                                  style: TextStyle(
-                                    fontSize:
-                                        MediaQuery.of(context).size.width *
-                                            0.035,
-                                  ),
                                 ),
                               ],
                             ),

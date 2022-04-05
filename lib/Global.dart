@@ -1,10 +1,6 @@
-import 'package:expense_tracker/ReceiptPages/ViewReceiptsPage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
-
-import 'ExpensePages/ExpensesOverviewPage.dart';
-import 'UserPages/ViewUsersPage.dart';
 
 @immutable
 abstract class Global {
@@ -12,9 +8,9 @@ abstract class Global {
   static const phoneNumberLength = 10;
   static MaskedInputFormatter phoneInputFormatter =
       MaskedInputFormatter('000-000-0000');
-  static PosInputFormatter moneyInputFormatter = const PosInputFormatter(
+  static const PosInputFormatter moneyInputFormatter = PosInputFormatter(
       mantissaLength: 2, thousandsSeparator: ThousandsPosSeparator.comma);
-  static const double? defaultRadius = 10;
+  static const double defaultRadius = 10;
   static const imageCompression = 50;
   static const imageQuality = 30;
   static const SizedBox defaultIconSpacing = SizedBox(

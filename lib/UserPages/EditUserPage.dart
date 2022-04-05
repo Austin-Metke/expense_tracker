@@ -70,39 +70,6 @@ class _EditUserPageState extends State<EditUserPage> {
                   child: phoneNumberField(),
                 ),
 
-                //Password
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: "User Password",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                      prefixIcon: Icon(Icons.lock),
-                      hintText: "User Password",
-                    ),
-                    validator: (value) => _passwordValidator(value),
-                    onChanged: (value) => setState(() => _password = value),
-                  ),
-                ),
-
-                //Confirm password
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: "Confirm password",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                      prefixIcon: Icon(Icons.lock),
-                      hintText: "Confirm Password",
-                    ),
-                    validator: (value) => _confirmPasswordValidator(value),
-                  ),
-                ),
-
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: DropdownButton<int>(

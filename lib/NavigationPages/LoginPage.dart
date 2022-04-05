@@ -1,6 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:expense_tracker/NavigationPages/EmployeeNavigationPage.dart';
-import 'package:expense_tracker/NewUserPasswordChangePage.dart';
+import 'package:expense_tracker/UserPages/NewUserPasswordChangePage.dart';
 import 'package:expense_tracker/NavigationPages/ManagerNavigationPage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,8 +15,6 @@ class ExpenseTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-
 
     return const OKToast(
       child: MaterialApp(
@@ -51,15 +50,20 @@ class _LoginPageState extends State<LoginPage> {
       var emailCredential = EmailAuthProvider.credential(
           email: _phoneNumber + "@fakeemail.com", password: _password);
       try {
-        var user = await Global.auth.signInWithCredential(emailCredential);
+
+        await Global.auth.signInWithCredential(emailCredential);
+        var firstSignIn = await _isFirstSignIn();
+        var isManager = await _isManager();
+
         _phoneTextFieldController.clear();
         _passwordTextFieldController.clear();
-        if (user.additionalUserInfo!.isNewUser) {
-          //TODO Create change password page for new users
-          _showChangePasswordPage();
-        }
 
-        _showUserFunctionPage();
+        if (firstSignIn) {
+          //TODO Create change password page for new users
+          _showChangePasswordPage(isManager);
+        } else {
+          _showUserFunctionPage(isManager);
+        }
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
           case 'user-not-found':
@@ -148,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
+            borderRadius: BorderRadius.all(Radius.circular(Global.defaultRadius)),
           ),
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
@@ -168,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
       decoration: InputDecoration(
         labelText: "Password",
         border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
+          borderRadius: BorderRadius.all(Radius.circular(Global.defaultRadius)),
         ),
         prefixIcon: const Icon(Icons.lock),
         hintText: "Password",
@@ -233,8 +237,7 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  _showUserFunctionPage() async {
-    var isManager = await _isManager();
+  _showUserFunctionPage(bool isManager) async {
 
     Navigator.push(
         context,
@@ -244,12 +247,20 @@ class _LoginPageState extends State<LoginPage> {
                 : const EmployeeNavigationPage()));
   }
 
-  _showChangePasswordPage() {
+  _showChangePasswordPage(bool isManager) {
     Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => const NewUserPasswordChangePage()));
+            builder: (context) =>  NewUserPasswordChangePage(isManager: isManager)));
   }
+}
+
+Future<bool> _isFirstSignIn() async {
+
+  var isFirstSignIn = await FirebaseFirestore.instance.doc('isFirstSignIn/${Global.auth.currentUser!.uid}').get();
+
+  return isFirstSignIn.get('isFirstSignIn');
+
 }
 
 Future<bool> _isManager() async {

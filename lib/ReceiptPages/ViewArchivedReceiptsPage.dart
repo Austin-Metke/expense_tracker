@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_tracker/CustomWidgets/ReceiptWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import '../Global.dart';
 
 class ViewArchivedReceiptsPage extends StatefulWidget {
@@ -75,29 +74,25 @@ class _ViewArchivedReceiptsPageState extends State<ViewArchivedReceiptsPage> {
       var expenseType = receiptData['expenseType'];
 
       return InkWell(
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          child: ReceiptWidget(
+          child: Container(
+        padding: const EdgeInsets.all(10),
+        child: ReceiptWidget(
           total: total,
           expenseType: expenseType,
           date: date,
           image: image,
           comment: comment,
         ),
-        ));
+      ));
     }).toList());
   }
 
+  ///This implementation is really bad, but it works. To query all the receipts for the week of the given day,
+  ///we take the [_selectedDay], and continue adding/subtracting 1 day until we reach the beginning and end of the week.
+  ///We then pass in the beginning and end of the week into [FirebaseFirestore] to make our query
   Stream<QuerySnapshot> _getArchivedReceipts() async* {
-    
     DateTime firstDayOfWeek = _selectedDay!;
     DateTime lastDayOfWeek = _selectedDay!;
-
-    /*
-    This implementation is really bad, but it works. To query all the receipts for the week of the given day,
-    we take the selected day, and continue adding/subtracting 1 day until we reach the beginning and end of the week.
-    We then pass in the beginning and end of the week to make the query.
-     */
 
     while (firstDayOfWeek.weekday != DateTime.sunday) {
       firstDayOfWeek = firstDayOfWeek.subtract(const Duration(days: 1));

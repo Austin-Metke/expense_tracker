@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import '../Global.dart';
 import '../NavigationPages/EmployeeNavigationPage.dart';
 import '../NavigationPages/ManagerNavigationPage.dart';
@@ -93,6 +92,7 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
                 ),
               ),
 
+              //Change password button
               TextButton(
                   onPressed: _changePassword,
                   child: const Text("Change password"),
@@ -105,7 +105,7 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
   String? _passwordValidator(String? value) {
     if (value!.isEmpty) {
       return "Please enter a password!";
-    } else if(value.length < 6) {
+    } else if(value.length < Global.minPasswordLength) {
       return "Password must be 6 characters long!";
     }
 

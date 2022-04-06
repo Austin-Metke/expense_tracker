@@ -1,7 +1,7 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:oktoast/oktoast.dart';
-import '../FirebaseOperations/CloudFunctionActions.dart';
 import '../Global.dart';
 import '../DataTypes/User.dart';
 
@@ -17,7 +17,6 @@ class EditUserPage extends StatefulWidget {
 class _EditUserPageState extends State<EditUserPage> {
   final _key = GlobalKey<FormState>();
 
-  late String _password;
   String? _name;
   String? _oldphoneNumber;
   String? _newphoneNumber;
@@ -55,7 +54,7 @@ class _EditUserPageState extends State<EditUserPage> {
                       decoration: const InputDecoration(
                         labelText: "Name",
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          borderRadius: BorderRadius.all(Radius.circular(Global.defaultRadius)),
                         ),
                         prefixIcon: Icon(Icons.person),
                         hintText: "Name",
@@ -83,7 +82,7 @@ class _EditUserPageState extends State<EditUserPage> {
                       DropdownMenuItem(
                         value: 1,
                         child: const Text("Manager"),
-                        onTap: () => {_isManager = true},
+                        onTap: () => _isManager = true,
                       ),
                     ],
                     onChanged: (value) => setState(() => _selectedItem = value),
@@ -93,6 +92,7 @@ class _EditUserPageState extends State<EditUserPage> {
                 TextButton(
                   style: Global.defaultButtonStyle,
                   onPressed: () async => {
+                    //Check if all input fields are valid before creating user
                     if (_key.currentState!.validate())
                       {
                         await _updateUser(),
@@ -114,7 +114,8 @@ class _EditUserPageState extends State<EditUserPage> {
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
+            borderRadius:
+                BorderRadius.all(Radius.circular(Global.defaultRadius)),
           ),
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
@@ -152,21 +153,6 @@ class _EditUserPageState extends State<EditUserPage> {
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
-      dismissOtherToast: true,
-      textAlign: TextAlign.center,
-    );
-  }
-
-  _passwordtooShortToast() {
-    showToast(
-      'Password must be 6 characters long',
-      position: ToastPosition.bottom,
-      backgroundColor: Colors.red,
-      radius: Global.defaultRadius,
-      textStyle: TextStyle(
-        fontSize: MediaQuery.of(context).size.width * 0.040,
-        color: Colors.white,
-      ),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
     );
@@ -218,7 +204,7 @@ class _EditUserPageState extends State<EditUserPage> {
   Future<void> _updateUser() async {
     _loadingToast();
 
-    String? functionResponse = await CloudFunctionActions.updateUser(
+    String? functionResponse = await _updateUserCloudFunction(
         user: User(
       isManager: _isManager,
       oldEmail: '$_oldphoneNumber@fakeemail.com',
@@ -230,15 +216,18 @@ class _EditUserPageState extends State<EditUserPage> {
       case 'auth/email-already-exists':
         _userAlreadyExistsToast();
         break;
-
-      case 'auth/invalid-password':
-        _passwordtooShortToast();
-        break;
       case 'success':
         _successToast();
         break;
       default:
         _errorToast();
     }
+  }
+
+  _updateUserCloudFunction({required User user}) async {
+    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
+        .httpsCallable('updateUser');
+    final resp = await callable.call(user.toJson());
+    return resp.data;
   }
 }

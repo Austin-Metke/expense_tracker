@@ -6,7 +6,12 @@ const auth = admin.auth();
 const firestore = admin.firestore();
 const increment = admin.firestore.FieldValue.increment;
 
-exports.makeUser = functions.region('us-west2').https.onCall(async (data, context) => {
+exports.makeUser = functions.runWith({allowInvalidAppCheckToken: false}).region('us-west2').https.onCall(async (data, context) => {
+
+    if(context.app === undefined) {
+        throw new functions.https.HttpsError('failed-precondition', 'This function must be called from an App Check verified app');
+    }
+
 
     let user = await auth.getUser(context.auth.uid);
 
@@ -76,7 +81,11 @@ exports.deleteData = functions.region('us-west2').auth.user().onDelete(async (us
 
 });
 
-exports.deleteUser = functions.region('us-west2').https.onCall(async (data, context) => {
+exports.deleteUser = functions.runWith({allowInvalidAppCheckToken: false}).region('us-west2').https.onCall(async (data, context) => {
+
+    if(context.app === undefined) {
+        throw new functions.https.HttpsError('failed-precondition', 'This function must be called from an App Check verified app');
+    }
 
     let user = await auth.getUser(context.auth.uid);
 
@@ -99,7 +108,11 @@ exports.deleteUser = functions.region('us-west2').https.onCall(async (data, cont
     }
 });
 
-exports.updateUser = functions.region('us-west2').https.onCall(async (data, context) => {
+exports.updateUser = functions.runWith({allowInvalidAppCheckToken: false}).region('us-west2').https.onCall(async (data, context) => {
+
+    if(context.app === undefined) {
+        throw new functions.https.HttpsError('failed-precondition', 'This function must be called from an App Check verified app');
+    }
 
     let user = await auth.getUser(context.auth.uid);
     if(user.customClaims.isManager) {

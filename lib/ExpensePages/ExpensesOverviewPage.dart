@@ -71,7 +71,7 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
       ChartData(ExpenseType.other, otherTotal, Colors.red),
     ];
 
-    var barChartData = <ChartData>[
+    var columnChartData = <ChartData>[
       ChartData(ExpenseType.food, foodCount, Colors.green),
       ChartData(ExpenseType.tools, toolsCount, Colors.purple),
       ChartData(ExpenseType.travel, travelCount, Colors.blue),
@@ -79,57 +79,55 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
     ];
 
     return ListView(
-      children:[
-              //**************Pie Chart**********
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: SfCircularChart(
-                    title:
-                        ChartTitle(text: "Total Expenses: \$ ${cumulativeTotal.toStringAsFixed(2)}"),
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: SfCircularChart(
+              borderWidth: 2,
+              borderColor: Colors.black,
+              title: ChartTitle(
+                  text:
+                  "My Expenses for The Week:  ${cumulativeTotal == 0 ? "none" : "\$ ${cumulativeTotal.toStringAsFixed(2)}"}"),
+              legend: Legend(
+                  isVisible: true,
+                  position: LegendPosition.top,
+                  offset: Offset.zero),
+              series: <CircularSeries>[
+                PieSeries<ChartData, String>(
+                    radius: "75%",
+                    dataSource: pieChartData,
+                    pointColorMapper: (ChartData data, _) => data.color,
+                    xValueMapper: (ChartData data, _) => data.x,
+                    yValueMapper: (ChartData data, _) => data.y,
+                    dataLabelMapper: (ChartData data, _) =>
+                    "\$ ${data.y.toStringAsFixed(2)}",
+                    legendIconType: LegendIconType.circle,
+                    dataLabelSettings: const DataLabelSettings(
+                      showZeroValue: false,
+                      isVisible: true,
+                      labelIntersectAction: LabelIntersectAction.shift,
+                      overflowMode: OverflowMode.shift,
+                      connectorLineSettings: ConnectorLineSettings(
+                        color: Colors.black,
+                        type: ConnectorType.line,
+                      ),
+                      labelPosition: ChartDataLabelPosition.outside,
+                    ))
+              ],
+            ),
+          ),
+        ),
+        Padding(
+            padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+            child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.25,
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: SfCartesianChart(
                     borderWidth: 2,
                     borderColor: Colors.black,
-                    legend: Legend(
-                        isVisible: true,
-                        position: LegendPosition.top,
-                        offset: Offset.zero),
-                    series: <CircularSeries>[
-                      PieSeries<ChartData, String>(
-                          radius: "75%",
-                          dataSource: pieChartData,
-                          pointColorMapper: (ChartData data, _) => data.color,
-                          xValueMapper: (ChartData data, _) => data.x,
-                          yValueMapper: (ChartData data, _) => data.y,
-                          dataLabelMapper: (ChartData data, _) =>
-                              "\$ ${data.y.toStringAsFixed(2)}",
-                          legendIconType: LegendIconType.circle,
-                          dataLabelSettings: const DataLabelSettings(
-                            showZeroValue: false,
-                            isVisible: true,
-                            labelIntersectAction: LabelIntersectAction.shift,
-                            overflowMode: OverflowMode.shift,
-                            connectorLineSettings: ConnectorLineSettings(
-                              color: Colors.black,
-                              type: ConnectorType.line,
-                            ),
-                            labelPosition: ChartDataLabelPosition.outside,
-                          ))
-                    ],
-                  ),
-                ),
-              ),
-              //*****************************
-
-              //***********BarChart**************
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: SizedBox(
-                  child: SfCartesianChart(
-                    borderWidth: 2,
-                    borderColor: Colors.black,
-                    title:
-                        ChartTitle(text: "Expenses Made: $cumulativeCount"),
+                    title: ChartTitle(text: "Expenses Made: $cumulativeCount"),
                     primaryXAxis: CategoryAxis(
                       isVisible: true,
                     ),
@@ -139,17 +137,13 @@ class _UserTotalPageState extends State<ExpensesOverviewPage> {
                         rangePadding: ChartRangePadding.auto),
                     series: <ChartSeries<ChartData, String>>[
                       ColumnSeries<ChartData, String>(
-                        dataSource: barChartData,
+                        dataSource: columnChartData,
                         xValueMapper: (ChartData data, _) => data.x,
                         yValueMapper: (ChartData data, _) => data.y,
                         pointColorMapper: (ChartData data, _) => data.color,
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              //**********************
-            ],
+                    ]))),
+      ],
     );
   }
 

@@ -99,7 +99,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _logOut() async {
     await Global.auth.signOut();
-
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => const ExpenseTracker()));
 
   }
 

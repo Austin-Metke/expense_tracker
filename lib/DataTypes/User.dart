@@ -1,4 +1,3 @@
-
 class User {
   String? name;
   String? email;
@@ -6,13 +5,16 @@ class User {
   bool? isManager;
   String? phoneNumber;
 
+  User(
+      {required this.name,
+      required this.email,
+      this.oldEmail,
+      required this.isManager,
+      required this.phoneNumber});
+
   toJson() => _serializeToJson(this);
 
-  //Proper way to create a constructor in Dart
-  User({required this.name, required this.email, this.oldEmail, required this.isManager, required this.phoneNumber});
-
-
-  Future<Map<String, dynamic>> _serializeToJson(User user) async {
+  Map<String, dynamic> _serializeToJson(User user) {
     return <String, dynamic>{
       "name": user.name,
       "phoneNumber": user.phoneNumber,

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 
+@immutable
 abstract class ExpenseType {
   static const String travel = 'Travel';
   static const String food = 'Food';
@@ -14,14 +16,16 @@ class Receipt {
   String? comment;
   String? expenseType;
 
-  toJson() => _serializeToJson(this);
-
   Receipt(
       {required this.total,
       required this.expenseType,
-      this.image,
+      required this.image,
       this.comment});
 
+  toJson() => _serializeToJson(this);
+
+  ///When updating a [Receipt], a user may not update its [image]. if the [image] passed in is null,
+  ///we will only [total] [expenseType] and [total]
   Map<String, dynamic> _serializeToJson(Receipt receipt) {
     if (receipt.image == null) {
       return <String, dynamic>{
@@ -30,12 +34,11 @@ class Receipt {
         'expenseType': receipt.expenseType,
       };
     } else {
-      final _imageAsBytes =
-          File(receipt.image!.absolute.path).readAsBytesSync();
-      final _b64Enc = base64Encode(_imageAsBytes);
+      final imageAsBytes = File(receipt.image!.absolute.path).readAsBytesSync();
+      final serializedImage = base64Encode(imageAsBytes);
 
       return <String, dynamic>{
-        'image': _b64Enc,
+        'image': serializedImage,
         'total': receipt.total,
         'comment': receipt.comment,
         'expenseType': receipt.expenseType,

@@ -24,13 +24,11 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
   String? _comment;
   var _enableButton = true;
   String _expenseType = ExpenseType.travel;
-  final _characterLimit = 300;
   final dbRef = FirebaseFirestore.instance.collection('users');
 
   @override
   Widget build(BuildContext context) {
     return OKToast(
-        radius: 10,
         child: Scaffold(
           appBar: AppBar(
             backgroundColor: Global.colorBlue,
@@ -93,9 +91,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                             ),
                             onPressed: () => getImage(),
                           ),
-
-                         const Padding(padding: EdgeInsets.all(5)),
-
+                          const Padding(padding: EdgeInsets.all(5)),
                           TextButton(
                             style: Global.defaultButtonStyle,
                             onPressed: () => getCamera(),
@@ -143,7 +139,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                           value,
                           allowHyphen: false,
                           allowPeriod: false)),
-                      inputFormatters: [Global.moneyInputFormatter],
+                      inputFormatters: const [Global.moneyInputFormatter],
                     ),
                   ),
                   //**********************************
@@ -156,14 +152,15 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
                         labelText: "Comment",
                         hintText: "Add a comment (optional)",
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          borderRadius: BorderRadius.all(
+                              Radius.circular(Global.defaultRadius)),
                         ),
                       ),
                       onChanged: (value) => _comment = value,
                       validator: (value) => _validateComment(value),
                       onFieldSubmitted: (value) =>
                           _key.currentState?.validate(),
-                      maxLength: _characterLimit,
+                      maxLength: Global.characterLimit,
                     ),
                   ),
                   //**********************************
@@ -228,13 +225,12 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
       final imageAsFile = File(image.path);
 
-      var strippedImage = await _stripImage(imageAsFile);
+      var strippedImage = await _compressImage(imageAsFile);
 
       setState(() => _image = strippedImage);
     } on PlatformException {
       _cameraDeniedToast();
     }
-
   }
 
   Future<void> getCamera() async {
@@ -244,7 +240,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
       final imageAsFile = File(image.path);
 
-      var strippedImage = await _stripImage(imageAsFile);
+      var strippedImage = await _compressImage(imageAsFile);
 
       setState(() => _image = strippedImage);
     } on PlatformException {
@@ -257,7 +253,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     if (formState!.validate() && _validateImage(_image)) {
       _uploadWait();
       try {
-        await FirestoreActions.uploadReceipt(
+        await _uploadReceiptCloudFunction(
           receipt: Receipt(
               image: _image,
               total: _receiptTotal,
@@ -270,6 +266,12 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
       }
     }
   }
+
+  Future<void> _uploadReceiptCloudFunction(
+      {required Receipt receipt}) => FirebaseFirestore.instance.collection('users')
+      .doc(Global.auth.currentUser?.uid)
+      .collection("receipts").add(receipt.toJson());
+
 
   _validateTotal(String? value) {
     if (value!.isEmpty || _receiptTotal!.isNaN || double.parse(value) == 0) {
@@ -286,7 +288,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
   }
 
   _validateComment(String? value) {
-    if (value!.length > _characterLimit) {
+    if (value!.length > Global.characterLimit) {
       return 'Comment is too long';
     }
 
@@ -303,14 +305,6 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
     );
 
     return compressedImage;
-  }
-
-  _stripImage(File? image) {
-    var compressImage = _compressImage(image);
-
-    //TODO Create method to make image monochrome
-
-    return compressImage;
   }
 
   _uploadFail() {

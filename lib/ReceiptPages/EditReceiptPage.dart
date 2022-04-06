@@ -15,7 +15,8 @@ class EditReceiptPage extends StatefulWidget {
   final Map<String, dynamic> receiptData;
   final String? receiptID;
 
-  const EditReceiptPage({Key? key, required this.receiptData, required this.receiptID})
+  const EditReceiptPage(
+      {Key? key, required this.receiptData, required this.receiptID})
       : super(key: key);
 
   @override
@@ -263,24 +264,16 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
 
   Future<void> _updateReceipt() async {
     final formstate = _key.currentState;
-    /*
-    _image represents an image selected from the users gallery or taken with their camera.
-    If the user doesn't update the image, then _image will be null,
-    in which case the image does not need to be updated.
-     */
-    Receipt receipt = (_image == null)
-        ? Receipt(total: _total, comment: _comment, expenseType: _expenseType)
-        : Receipt(
-            total: _total,
-            comment: _comment,
-            image: _image,
-            expenseType: _expenseType);
 
     if (formstate!.validate()) {
       _uploadWait();
       try {
-        await FirestoreActions.updateReceipt(
-          receipt: receipt,
+        await _updateReceiptCloudFunction(
+          receipt: Receipt(
+              total: _total,
+              comment: _comment,
+              expenseType: _expenseType,
+              image: _image!),
           receiptID: _receiptID,
         );
         _uploadSuccess();
@@ -289,6 +282,12 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
       }
     }
   }
+
+  Future<void> _updateReceiptCloudFunction(
+          {required Receipt receipt, required receiptID}) =>
+      FirebaseFirestore.instance
+          .doc("users/${Global.auth.currentUser!.uid}/receipts/$receiptID")
+          .update(receipt.toJson());
 
   _validateTotal(String? value) {
     if (value!.isEmpty ||
@@ -345,7 +344,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
       'Upload complete!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.040,
           color: Colors.white),
@@ -410,5 +409,3 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
     );
   }
 }
-
-

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:oktoast/oktoast.dart';
-import '../FirebaseOperations/CloudFunctionActions.dart';
 import '../Global.dart';
 import '../DataTypes/User.dart';
 
@@ -19,7 +18,6 @@ class _AddUserPageState extends State<AddUserPage> {
 
   late String? _name;
   late String _phoneNumber;
-  late String? _password;
   late bool? _isManager = false;
 
   int? selectedItem = 0;
@@ -27,7 +25,6 @@ class _AddUserPageState extends State<AddUserPage> {
   @override
   Widget build(BuildContext context) {
     return OKToast(
-        radius: 10,
         child: Scaffold(
             appBar: AppBar(
               backgroundColor: Global.colorBlue,
@@ -46,7 +43,7 @@ class _AddUserPageState extends State<AddUserPage> {
                             labelText: "Name",
                             border: OutlineInputBorder(
                               borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
+                                  BorderRadius.all(Radius.circular(Global.defaultRadius)),
                             ),
                             prefixIcon: Icon(Icons.person),
                             hintText: "Name",
@@ -59,39 +56,6 @@ class _AddUserPageState extends State<AddUserPage> {
                     Padding(
                       padding: const EdgeInsets.all(10),
                       child: phoneNumberField(),
-                    ),
-
-                    //Password
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: TextFormField(
-                        decoration: const InputDecoration(
-                          labelText: "User Password",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
-                          prefixIcon: Icon(Icons.lock),
-                          hintText: "User Password",
-                        ),
-                        validator: (value) => _passwordValidator(value),
-                        onChanged: (value) => setState(() => _password = value),
-                      ),
-                    ),
-
-                    //Confirm password
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: TextFormField(
-                        decoration: const InputDecoration(
-                          labelText: "Confirm password",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
-                          prefixIcon: Icon(Icons.lock),
-                          hintText: "Confirm Password",
-                        ),
-                        validator: (value) => _confirmPasswordValidator(value),
-                      ),
                     ),
 
                     Padding(
@@ -130,18 +94,18 @@ class _AddUserPageState extends State<AddUserPage> {
         decoration: const InputDecoration(
           labelText: "Phone number",
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
+            borderRadius: BorderRadius.all(Radius.circular(Global.defaultRadius)),
           ),
           prefixIcon: Icon(Icons.dialpad_outlined),
           hintText: "Phone number",
         ),
-        validator: (value) => _phoneNumberValidator(toNumericString(value, allowPeriod: false, allowHyphen: false)),
-        onChanged: (value) => _phoneNumber = toNumericString(value, allowHyphen: false),
+        validator: (value) => _phoneNumberValidator(
+            toNumericString(value, allowPeriod: false, allowHyphen: false)),
+        onChanged: (value) =>
+            _phoneNumber = toNumericString(value, allowHyphen: false),
         onFieldSubmitted: (value) => _key.currentState?.validate(),
         keyboardType: TextInputType.phone,
-        inputFormatters: [
-          Global.phoneInputFormatter
-        ],
+        inputFormatters: [Global.phoneInputFormatter],
       );
 
   _nameValidator(String? value) {
@@ -160,45 +124,19 @@ class _AddUserPageState extends State<AddUserPage> {
     return null;
   }
 
-  _passwordValidator(String? value) {
-    if (value!.isEmpty) {
-      return 'Please enter a password';
-    }
-
-    //return null if text is valid
-    return null;
-  }
-
-  _confirmPasswordValidator(String? value) {
-    if (value!.isEmpty) {
-      return 'please enter a password';
-    }
-
-    if (value != _password) {
-      return 'passwords do not match';
-    }
-
-    return null;
-  }
-
   Future<void> _createUser() async {
-
     _loadingToast();
 
-    String? functionStatus = await CloudFunctionActions.createUser(user:User(
-        name: _name,
-        isManager: _isManager,
-        email: '$_phoneNumber@fakeemail.com',
-        phoneNumber: _phoneNumber));
-
+    String? functionStatus = await _createUserCloudFunction(
+        user: User(
+            name: _name,
+            isManager: _isManager,
+            email: '$_phoneNumber@fakeemail.com',
+            phoneNumber: _phoneNumber));
 
     switch (functionStatus) {
       case 'auth/email-already-exists':
         _userAlreadyExistsToast();
-        break;
-
-      case 'auth/invalid-password':
-        _passwordtooShortToast();
         break;
 
       case 'success':
@@ -209,6 +147,14 @@ class _AddUserPageState extends State<AddUserPage> {
     }
   }
 
+  Future<String?> _createUserCloudFunction({required User user}) async {
+    HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'us-west2')
+        .httpsCallable('makeUser');
+    final resp = await callable.call(user.toJson());
+    return resp.data;
+  }
+
+
   _successToast() {
     showToast(
       'User \'$_name\' successfully created!',
@@ -218,21 +164,6 @@ class _AddUserPageState extends State<AddUserPage> {
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.035,
           color: Colors.white),
-      dismissOtherToast: true,
-      textAlign: TextAlign.center,
-    );
-  }
-
-  _passwordtooShortToast() {
-    showToast(
-      'Password must be 6 characters long',
-      position: ToastPosition.bottom,
-      backgroundColor: Colors.red,
-      radius: Global.defaultRadius,
-      textStyle: TextStyle(
-        fontSize: MediaQuery.of(context).size.width * 0.035,
-        color: Colors.white,
-      ),
       dismissOtherToast: true,
       textAlign: TextAlign.center,
     );
@@ -279,6 +210,5 @@ class _AddUserPageState extends State<AddUserPage> {
       dismissOtherToast: true,
       textAlign: TextAlign.center,
     );
-
   }
 }

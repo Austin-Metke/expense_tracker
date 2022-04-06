@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_tracker/CustomWidgets/ReceiptWidget.dart';
-import 'package:expense_tracker/FirebaseOperations/FirestoreActions.dart';
 import 'package:expense_tracker/Global.dart';
 import 'package:expense_tracker/ReceiptPages/UploadReceiptPage.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +43,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   bool _orderByTotal = false;
   bool _orderByDateDescending = false;
   bool _orderByDateAscending = false;
-  int? selectedValue;
+  int? _selectedValue;
   late TapDownDetails _tapDownDetails;
 
   @override
@@ -86,7 +85,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                             {
                               _showUploadReceiptPage(),
                             }
-                        })
+                        }),
               ],
             ),
             floatingActionButton: ElevatedButton(
@@ -112,10 +111,14 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                     return RefreshIndicator(
                         onRefresh: _onRefresh,
                         child: const Center(
-                            child: Text("An unknown error has occurred, please refresh and try again")));
+                            child: Text(
+                                "An unknown error has occurred, please refresh and try again")));
                   } else if (snapshot.hasData) {
                     if (snapshot.data!.size == 0) {
-                      return RefreshIndicator(onRefresh: _onRefresh, child: const Center(child: Text("No receipts have been uploaded")));
+                      return RefreshIndicator(
+                          onRefresh: _onRefresh,
+                          child: const Center(
+                              child: Text("No receipts have been uploaded")));
                     }
 
                     return RefreshIndicator(
@@ -164,19 +167,24 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
   _deleteReceipt({required String receiptID}) async {
     _loadingToast();
     try {
-      await FirestoreActions.deleteReceipt(receiptID: receiptID);
+      await _deleteReceiptCloudFunction(receiptID: receiptID);
       _successToast();
     } catch (e) {
       _errorToast();
     }
   }
 
+  Future<void> _deleteReceiptCloudFunction({required receiptID}) =>
+      FirebaseFirestore.instance
+          .doc("users/${Global.auth.currentUser!.uid}/receipts/$receiptID")
+          .delete();
+
   _successToast() {
     showToast(
       'Successfully deleted receipt!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.greenAccent.shade400,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.035,
           color: Colors.white),
@@ -190,7 +198,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
       'Delete failed!',
       position: ToastPosition.bottom,
       backgroundColor: Colors.red,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.035,
           color: Colors.white),
@@ -204,7 +212,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
       'Deleting...',
       position: ToastPosition.bottom,
       backgroundColor: Colors.grey,
-      radius: 10.0,
+      radius: Global.defaultRadius,
       textStyle: TextStyle(
           fontSize: MediaQuery.of(context).size.width * 0.035,
           color: Colors.white),
@@ -243,7 +251,7 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
         String expenseType = receiptData['expenseType'];
         return InkWell(
           onTap: () async => {
-            selectedValue = await showMenu<int>(
+            _selectedValue = await showMenu<int>(
               context: context,
               items: [
                 PopupMenuItem<int>(
@@ -275,12 +283,12 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                   _tapDownDetails.globalPosition.dx,
                   0),
             ),
-            if (selectedValue == 0)
+            if (_selectedValue == 0)
               {
                 _showEditReceiptPage(
                     receiptData: receiptData, receiptID: document.id)
               }
-            else if (selectedValue == 1)
+            else if (_selectedValue == 1)
               {
                 _deleteReceipt(receiptID: document.id),
               }

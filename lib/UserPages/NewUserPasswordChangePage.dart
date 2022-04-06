@@ -23,6 +23,7 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
 
   bool _showPassword = false;
   bool _showValidatePassword = false;
+
   @override
   void initState() {
     super.initState();
@@ -51,8 +52,8 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
                             ? const Icon(Icons.visibility_off)
                             : const Icon(Icons.visibility),
                         onTap: () => setState(() {
-                          _showPassword = !_showPassword;
-                        })),
+                              _showPassword = !_showPassword;
+                            })),
                     labelText: "Password",
                     border: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(
@@ -77,8 +78,8 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
                             ? const Icon(Icons.visibility_off)
                             : const Icon(Icons.visibility),
                         onTap: () => setState(() {
-                          _showValidatePassword = !_showValidatePassword;
-                        })),
+                              _showValidatePassword = !_showValidatePassword;
+                            })),
                     labelText: "Confirm password",
                     border: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(
@@ -88,7 +89,7 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
                     hintText: "Confirm Password",
                   ),
                   validator: (value) => _confirmPasswordValidator(value),
-    obscureText: !_showValidatePassword,
+                  obscureText: !_showValidatePassword,
                 ),
               ),
 
@@ -105,7 +106,7 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
   String? _passwordValidator(String? value) {
     if (value!.isEmpty) {
       return "Please enter a password!";
-    } else if(value.length < Global.minPasswordLength) {
+    } else if (value.length < Global.minPasswordLength) {
       return "Password must be 6 characters long!";
     }
 
@@ -115,13 +116,11 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
   String? _confirmPasswordValidator(String? value) {
     if (value!.isEmpty) {
       return "Please enter a password";
-    } else if(value.length < 6) {
+    } else if (value.length < 6) {
       return "Password must be 6 characters long!";
-    }
-    else if (value != _password) {
+    } else if (value != _password) {
       return "Passwords do not match!";
     }
-
 
     return null;
   }
@@ -143,7 +142,7 @@ class _NewUserPasswordChangePageState extends State<NewUserPasswordChangePage> {
                     ? const ManagerNavigationPage()
                     : const EmployeeNavigationPage()));
       } on FirebaseAuthException catch (e) {
-       print(e);
+        print(e);
       }
       return null;
     }

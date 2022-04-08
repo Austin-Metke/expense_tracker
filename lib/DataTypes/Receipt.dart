@@ -22,10 +22,11 @@ class Receipt {
       required this.image,
       this.comment});
 
+
   toJson() => _serializeToJson(this);
 
   ///When updating a [Receipt], a user may not update its [image]. if the [image] passed in is null,
-  ///we will only [total] [expenseType] and [total]
+  ///we will only upload [comment] [expenseType] and [total]
   Map<String, dynamic> _serializeToJson(Receipt receipt) {
     if (receipt.image == null) {
       return <String, dynamic>{

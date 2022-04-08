@@ -274,7 +274,7 @@ class _ReceiptUploadPageState extends State<ReceiptUploadPage> {
 
 
   _validateTotal(String? value) {
-    if (value!.isEmpty || _receiptTotal!.isNaN || double.parse(value) == 0) {
+    if (value!.isEmpty || double.parse(value) == 0) {
       return 'Please enter a total for your receipt';
     }
     return null;

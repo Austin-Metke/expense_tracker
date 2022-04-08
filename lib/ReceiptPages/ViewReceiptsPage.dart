@@ -56,36 +56,41 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
               centerTitle: true,
               title: const Text("Uploaded Receipts"),
               actions: [
-                PopupMenuButton(
-                    itemBuilder: (context) {
-                      return [
-                        const PopupMenuItem<int>(
-                          value: 0,
-                          child: Text("Add Receipt"),
-                        ),
-                        PopupMenuItem<int>(
-                          value: 1,
-                          child: const Text("Sort by value"),
-                          onTap: () => _sortByValue(),
-                        ),
-                        PopupMenuItem<int>(
-                          value: 2,
-                          child: const Text("Sort by newest"),
-                          onTap: () => _sortByDateDescending(),
-                        ),
-                        PopupMenuItem<int>(
-                          value: 3,
-                          child: const Text("Sort by oldest"),
-                          onTap: () => _sortByDateAscending(),
-                        ),
-                      ];
-                    },
-                    onSelected: (value) => {
-                          if (value == 0)
-                            {
-                              _showUploadReceiptPage(),
-                            }
-                        }),
+                PopupMenuButton(itemBuilder: (context) {
+                  return const [
+                    PopupMenuItem<int>(
+                      value: 0,
+                      child: Text("Add Receipt"),
+                    ),
+                    PopupMenuItem<int>(
+                      value: 1,
+                      child: Text("Sort by value"),
+                    ),
+                    PopupMenuItem<int>(
+                      value: 2,
+                      child: Text("Sort by newest"),
+                    ),
+                    PopupMenuItem<int>(
+                      value: 3,
+                      child: Text("Sort by oldest"),
+                    ),
+                  ];
+                }, onSelected: (value) {
+                  switch (value) {
+                    case 0:
+                      _showUploadReceiptPage();
+                      break;
+                    case 1:
+                      _sortByValue();
+                      break;
+                    case 2:
+                      _sortByDateDescending();
+                      break;
+                    case 3:
+                      _sortByDateAscending();
+                      break;
+                  }
+                }),
               ],
             ),
             floatingActionButton: ElevatedButton(
@@ -109,16 +114,20 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
                     snapshot.connectionState == ConnectionState.done) {
                   if (snapshot.hasError) {
                     return RefreshIndicator(
-                        onRefresh: _onRefresh,
-                        child: const Center(
-                            child: Text(
-                                "An unknown error has occurred, please refresh and try again")));
+                      onRefresh: _onRefresh,
+                      child: const Center(
+                        child: Text(
+                            "An unknown error has occurred, please refresh and try again"),
+                      ),
+                    );
                   } else if (snapshot.hasData) {
                     if (snapshot.data!.size == 0) {
                       return RefreshIndicator(
-                          onRefresh: _onRefresh,
-                          child: const Center(
-                              child: Text("No receipts have been uploaded")));
+                        onRefresh: _onRefresh,
+                        child: const Center(
+                          child: Text("No receipts have been uploaded"),
+                        ),
+                      );
                     }
 
                     return RefreshIndicator(
@@ -143,7 +152,9 @@ class _ViewUploadedReceiptsPageState extends State<ViewUploadedReceiptsPage> {
     } else if (_orderByDateAscending) {
       return _receiptStreamByDateAscending;
     }
-    return _receiptStream;
+    return FirebaseFirestore.instance
+        .collection('users/${Global.auth.currentUser!.uid}/receipts')
+        .snapshots();
   }
 
   _showUploadReceiptPage() {

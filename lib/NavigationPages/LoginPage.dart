@@ -21,6 +21,7 @@ class ExpenseTracker extends StatelessWidget {
   }
 }
 
+
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
@@ -30,58 +31,12 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
-
   late String _phoneNumber;
   late String _password;
-  late bool _showPassword = false;
-  late bool? _userNotFound = false;
-  late bool? _wrongPassword = false;
-  late bool? _tooManyRequests = false;
-  _submitForm() async {
-    final formState = _key.currentState;
-
-    if (formState!.validate()) {
-      /*
-      Firebase does not support logging in with phone number and password.
-      So we append "@fakeemail.com" to circumvent it, the end user never sees this
-       */
-      var emailCredential = EmailAuthProvider.credential(
-          email: _phoneNumber + "@fakeemail.com", password: _password);
-      try {
-        await Global.auth.signInWithCredential(emailCredential);
-        var isFirstSignIn = await _isFirstSignIn();
-        var isManager = await _isManager();
-
-
-        if (isFirstSignIn) {
-          _showChangePasswordPage(isManager);
-        } else {
-          _showUserFunctionPage(isManager);
-        }
-      } on FirebaseAuthException catch (e) {
-        switch (e.code) {
-          case 'user-not-found':
-            setState(() => _userNotFound = true);
-            formState.validate();
-            print("User not found");
-            break;
-          case 'wrong-password':
-            setState(() => _wrongPassword = true);
-            formState.validate();
-            print("Wrong password");
-            break;
-          case 'too-many-requests':
-            setState(() => _tooManyRequests = true);
-            formState.validate();
-            print("Too many requests");
-            break;
-
-          default:
-            print("Unknown error " + e.code);
-        }
-      }
-    }
-  }
+  bool _showPassword = false;
+  bool _userNotFound = false;
+  bool _wrongPassword = false;
+  bool _tooManyRequests = false;
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +139,51 @@ class _LoginPageState extends State<LoginPage> {
       onChanged: (value) => _password = value,
       onFieldSubmitted: (value) => _key.currentState?.validate());
 
+  _submitForm() async {
+    final formState = _key.currentState;
+
+    if (formState!.validate()) {
+      /*
+      Firebase does not support logging in with phone number and password.
+      So we append "@fakeemail.com" to circumvent it, the end user never sees this
+       */
+      var emailCredential = EmailAuthProvider.credential(
+          email: _phoneNumber + "@fakeemail.com", password: _password);
+      try {
+        await Global.auth.signInWithCredential(emailCredential);
+        var isFirstSignIn = await _isFirstSignIn();
+        var isManager = await _isManager();
+
+        if (isFirstSignIn) {
+          _showChangePasswordPage(isManager);
+        } else {
+          _showUserFunctionPage(isManager);
+        }
+      } on FirebaseAuthException catch (e) {
+        switch (e.code) {
+          case 'user-not-found':
+            setState(() => _userNotFound = true);
+            formState.validate();
+            print("User not found");
+            break;
+          case 'wrong-password':
+            setState(() => _wrongPassword = true);
+            formState.validate();
+            print("Wrong password");
+            break;
+          case 'too-many-requests':
+            setState(() => _tooManyRequests = true);
+            formState.validate();
+            print("Too many requests");
+            break;
+
+          default:
+            print("Unknown error " + e.code);
+        }
+      }
+    }
+  }
+
 //**********************Login Button**************************
   Widget loginButton() => TextButton(
         style: Global.defaultButtonStyle,
@@ -202,15 +202,18 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _passwordValidator(String? value) {
+    //If nothing is entered
     if (value!.isEmpty) {
       return 'Please enter a password';
     }
-    if (_wrongPassword!) {
+    //If password is wrong
+    if (_wrongPassword) {
       _wrongPassword = false;
       return 'Password is wrong, please try again';
     }
 
-    if (_tooManyRequests!) {
+    //If too many login requests were sent within a certain timeframe
+    if (_tooManyRequests) {
       _tooManyRequests = false;
       return 'Too many requests to login, try again later';
     }
@@ -220,11 +223,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _phoneNumberValidator(String? value) {
+    //If text is empty or less than the length of a phone number
     if (value!.isEmpty || value.length < Global.phoneNumberLength) {
       return 'Please enter a valid phone number';
     }
 
-    if (_userNotFound!) {
+    //If user doesn't exist
+    if (_userNotFound) {
       _userNotFound = false;
       return "User with phone number not exist";
     }

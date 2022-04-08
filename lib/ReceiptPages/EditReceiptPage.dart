@@ -156,7 +156,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                       onFieldSubmitted: (value) =>
                           _key.currentState?.validate(),
                       validator: (value) => _validateTotal(value),
-                      inputFormatters: [Global.moneyInputFormatter],
+                      inputFormatters: const [Global.moneyInputFormatter],
                     ),
                   ),
                   //**********************************
@@ -170,7 +170,7 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
                         labelText: "Comment",
                         hintText: "Add a comment (optional)",
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          borderRadius: BorderRadius.all(Radius.circular(Global.defaultRadius)),
                         ),
                       ),
                       onChanged: (value) => _comment = value,
@@ -273,11 +273,12 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
               total: _total,
               comment: _comment,
               expenseType: _expenseType,
-              image: _image!),
+              image: _image),
           receiptID: _receiptID,
         );
         _uploadSuccess();
       } catch (e) {
+        print(e);
         _uploadFail();
       }
     }
@@ -295,7 +296,6 @@ class _EditReceiptPageState extends State<EditReceiptPage> {
         double.parse(toNumericString(value)) == 0) {
       return 'Please enter a total for your receipt';
     }
-
     return null;
   }
 
